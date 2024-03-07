@@ -2,11 +2,11 @@
   "name": "react",
   "version": "1.0.0",
   "description": "react common function",
-  "main": "index.ts",
+  "module": "index.ts",
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "shared": "workspaces:*"
+    "shared": "workspace:*"
   }
 }

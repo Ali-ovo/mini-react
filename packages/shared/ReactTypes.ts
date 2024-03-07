@@ -3,7 +3,7 @@
  * @Author: Ali
  * @Date: 2024-03-06 16:56:47
  * @LastEditors: Ali
- * @LastEditTime: 2024-03-06 16:59:02
+ * @LastEditTime: 2024-03-07 16:10:44
  */
 
 export type Type = any
@@ -12,7 +12,7 @@ export type Ref = any
 export type Props = any
 export type ElementType = any
 
-export interface ReactElement {
+export interface ReactElementType {
   $$typeof: symbol | number
   type: ElementType
   key: Key
