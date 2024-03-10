@@ -2,8 +2,8 @@
  * @Description:react types
  * @Author: Ali
  * @Date: 2024-03-06 16:56:47
- * @LastEditors: Ali
- * @LastEditTime: 2024-03-07 16:10:44
+ * @LastEditors: ali ali_ovo@qq.com
+ * @LastEditTime: 2024-03-10 18:37:01
  */
 
 export type Type = any
@@ -20,3 +20,5 @@ export interface ReactElementType {
   props: Props
   __mark: string
 }
+
+export type Action<State> = State | ((prevState: State) => State)
