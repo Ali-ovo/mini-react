@@ -3,13 +3,14 @@
  * @Author: Ali
  * @Date: 2024-03-07 15:28:50
  * @LastEditors: Ali
- * @LastEditTime: 2024-03-07 16:44:34
+ * @LastEditTime: 2024-03-13 14:10:14
  */
 import path from 'path'
 import fs from 'fs'
 
 import ts from 'rollup-plugin-typescript2'
 import cjs from '@rollup/plugin-commonjs'
+import replace from '@rollup/plugin-replace'
 
 const pkgPath = path.resolve(__dirname, '../../packages')
 const distPath = path.resolve(__dirname, '../../dist/node_modules')
@@ -30,8 +31,13 @@ function getPackageJSON(pkgName) {
   return JSON.parse(str)
 }
 
-function getBaseRollupPlugins({ typescript = {} } = {}) {
-  return [cjs(), ts(typescript)]
+function getBaseRollupPlugins({
+  alias = {
+    __DEV__: true
+  },
+  typescript = {}
+} = {}) {
+  return [replace(alias), cjs(), ts(typescript)]
 }
 
 export { resolvePackagePath, getPackageJSON, getBaseRollupPlugins }

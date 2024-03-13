@@ -39,10 +39,18 @@ function renderRoot(root: FiberRootNode) {
       workLoop()
       break
     } catch (e) {
-      console.warn('workLoop error', e)
+      if (__DEV__) {
+        console.warn('workLoop error', e)
+      }
       workInProgress = null
     }
   } while (true)
+
+  const finishedWork = root.current.alternate
+  root.finishedWork = finishedWork
+
+  // dom update
+  commitRoot(root)
 }
 
 function workLoop() {
