@@ -3,7 +3,7 @@
  * @Author: Ali
  * @Date: 2024-03-07 15:28:50
  * @LastEditors: Ali
- * @LastEditTime: 2024-03-13 14:10:14
+ * @LastEditTime: 2024-03-14 15:30:24
  */
 import path from 'path'
 import fs from 'fs'
@@ -33,7 +33,8 @@ function getPackageJSON(pkgName) {
 
 function getBaseRollupPlugins({
   alias = {
-    __DEV__: true
+    __DEV__: true,
+    preventAssignment: true
   },
   typescript = {}
 } = {}) {

@@ -3,10 +3,10 @@
  * @Author: Ali
  * @Date: 2024-03-08 16:41:41
  * @LastEditors: Ali
- * @LastEditTime: 2024-03-13 15:07:21
+ * @LastEditTime: 2024-03-14 15:38:08
  */
 
-import { appendInitialChild, createInstance, createTextInstance } from 'hostConfig'
+import { Container, appendInitialChild, createInstance, createTextInstance } from 'hostConfig'
 import { FiberNode } from './fiber'
 import { HostComponent, HostRoot, HostText } from './workTags'
 import { NoFlags } from './fiberFlags'
@@ -25,6 +25,7 @@ export const completeWork = (workInProgress: FiberNode) => {
         // 构建 DOM
         const instance = createInstance(workInProgress.type, newProps)
 
+        appendAllChildren(instance, workInProgress)
         workInProgress.stateNode = instance
       }
 
@@ -39,7 +40,6 @@ export const completeWork = (workInProgress: FiberNode) => {
         const instance = createTextInstance(newProps.content)
 
         // 把 DOM 插入到 DOM 树中
-        appendAllChildren(instance, workInProgress)
         workInProgress.stateNode = instance
       }
 
@@ -58,7 +58,7 @@ export const completeWork = (workInProgress: FiberNode) => {
   }
 }
 
-function appendAllChildren(parent: FiberNode, workInProgress: FiberNode) {
+function appendAllChildren(parent: Container, workInProgress: FiberNode) {
   let node = workInProgress.child
 
   while (node !== null) {
