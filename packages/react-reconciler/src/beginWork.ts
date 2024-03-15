@@ -3,14 +3,15 @@
  * @Author: Ali
  * @Date: 2024-03-08 16:41:32
  * @LastEditors: Ali
- * @LastEditTime: 2024-03-13 15:08:42
+ * @LastEditTime: 2024-03-15 15:26:10
  */
 
 import { ReactElementType } from 'shared/ReactTypes'
 import { FiberNode } from './fiber'
 import { UpdateQueue, processUpdateQueue } from './updateQueue'
-import { HostComponent, HostRoot, HostText } from './workTags'
+import { FunctionComponent, HostComponent, HostRoot, HostText } from './workTags'
 import { mountChildFibers, reconcileChildFibers } from './childFibers'
+import { renderWithHooks } from './fiberHooks'
 
 export const beginWork = (workInProgress: FiberNode) => {
   // compare, return child node
@@ -24,6 +25,9 @@ export const beginWork = (workInProgress: FiberNode) => {
     case HostText:
       return null
 
+    case FunctionComponent:
+      return updateFunctionCOmponent(workInProgress)
+
     default:
       if (__DEV__) {
         console.warn('beginWork: unknown fiber tag')
@@ -33,6 +37,12 @@ export const beginWork = (workInProgress: FiberNode) => {
   }
 
   return null
+}
+
+function updateFunctionCOmponent(workInProgress: FiberNode) {
+  const nextChildren = renderWithHooks(workInProgress)
+  reconcileChildren(workInProgress, nextChildren)
+  return workInProgress.child
 }
 
 function updateHostRoot(workInProgress: FiberNode) {

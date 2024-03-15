@@ -3,7 +3,7 @@
  * @Author: Ali
  * @Date: 2024-03-14 14:41:40
  * @LastEditors: Ali
- * @LastEditTime: 2024-03-14 15:22:47
+ * @LastEditTime: 2024-03-15 15:10:53
  */
 
 import { Container, appendChildToContainer } from 'hostConfig'
@@ -93,7 +93,7 @@ function getHostParent(fiber: FiberNode): Container | null {
 
 function appendPlacementNodeIntoContainer(finishedWork: FiberNode, hostParent: Container) {
   if (finishedWork.tag === HostComponent || finishedWork.tag === HostText) {
-    appendChildToContainer(finishedWork.stateNode, hostParent)
+    appendChildToContainer(hostParent, finishedWork.stateNode)
     return
   }
 

@@ -3,12 +3,12 @@
  * @Author: Ali
  * @Date: 2024-03-08 16:41:41
  * @LastEditors: Ali
- * @LastEditTime: 2024-03-14 15:38:08
+ * @LastEditTime: 2024-03-15 15:26:41
  */
 
 import { Container, appendInitialChild, createInstance, createTextInstance } from 'hostConfig'
 import { FiberNode } from './fiber'
-import { HostComponent, HostRoot, HostText } from './workTags'
+import { FunctionComponent, HostComponent, HostRoot, HostText } from './workTags'
 import { NoFlags } from './fiberFlags'
 
 export const completeWork = (workInProgress: FiberNode) => {
@@ -50,6 +50,12 @@ export const completeWork = (workInProgress: FiberNode) => {
       bubbleProperties(workInProgress)
 
       return null
+
+    case FunctionComponent:
+      bubbleProperties(workInProgress)
+
+      return null
+
     default:
       if (__DEV__) {
         console.warn('completeWork: unknown fiber tag', workInProgress)
