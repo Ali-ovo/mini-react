@@ -2,15 +2,15 @@
  * @Description: react rollup config
  * @Author: Ali
  * @Date: 2024-03-07 15:25:45
- * @LastEditors: Ali
- * @LastEditTime: 2024-03-14 15:29:41
+ * @LastEditors: ali ali_ovo@qq.com
+ * @LastEditTime: 2024-03-16 18:19:15
  */
 
 import { getBaseRollupPlugins, getPackageJSON, resolvePackagePath } from './utils.js'
 import generatePackageJson from 'rollup-plugin-generate-package-json'
 import alias from '@rollup/plugin-alias'
 
-const { name, module } = getPackageJSON('react-dom')
+const { name, module, peerDependencies } = getPackageJSON('react-dom')
 
 // react-dom package path
 const pkgPath = resolvePackagePath(name)
@@ -34,6 +34,7 @@ export default [
         format: 'umd'
       }
     ],
+    external: [...Object.keys(peerDependencies)],
     plugins: [
       ...getBaseRollupPlugins(),
       alias({

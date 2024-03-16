@@ -1,12 +1,9 @@
-import React from 'react'
+import React, { useState } from 'react'
 import ReactDOM from 'react-dom'
 
 function App() {
-  return (
-    <div>
-      <span>my react</span>
-    </div>
-  )
+  const [num] = useState(1000)
+  return <div>{num}</div>
 }
 
 const root = ReactDOM.createRoot(document.getElementById('root'))

@@ -2,8 +2,8 @@
  * @Description: start of recursion
  * @Author: Ali
  * @Date: 2024-03-08 16:41:32
- * @LastEditors: Ali
- * @LastEditTime: 2024-03-15 15:26:10
+ * @LastEditors: ali ali_ovo@qq.com
+ * @LastEditTime: 2024-03-16 17:39:49
  */
 
 import { ReactElementType } from 'shared/ReactTypes'
@@ -26,7 +26,7 @@ export const beginWork = (workInProgress: FiberNode) => {
       return null
 
     case FunctionComponent:
-      return updateFunctionCOmponent(workInProgress)
+      return updateFunctionComponent(workInProgress)
 
     default:
       if (__DEV__) {
@@ -39,7 +39,7 @@ export const beginWork = (workInProgress: FiberNode) => {
   return null
 }
 
-function updateFunctionCOmponent(workInProgress: FiberNode) {
+function updateFunctionComponent(workInProgress: FiberNode) {
   const nextChildren = renderWithHooks(workInProgress)
   reconcileChildren(workInProgress, nextChildren)
   return workInProgress.child
