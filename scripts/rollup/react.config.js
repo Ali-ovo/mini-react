@@ -3,7 +3,7 @@
  * @Author: Ali
  * @Date: 2024-03-07 15:25:45
  * @LastEditors: Ali
- * @LastEditTime: 2024-03-07 16:17:51
+ * @LastEditTime: 2024-03-18 10:26:14
  */
 
 import { getBaseRollupPlugins, getPackageJSON, resolvePackagePath } from './utils.js'
@@ -50,14 +50,14 @@ export default [
       // jax-runtime
       {
         file: `${pkgDistPath}/jsx-runtime.js`,
-        name: 'jsx-runtime.js',
+        name: 'jsx-runtime',
         format: 'umd'
       },
 
       // jsx-runtime-development
       {
         file: `${pkgDistPath}/jsx-dev-runtime.js`,
-        name: 'jsx-dev-runtime.js',
+        name: 'jsx-dev-runtime',
         format: 'umd'
       }
     ],

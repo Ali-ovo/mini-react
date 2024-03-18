@@ -3,7 +3,7 @@
  * @Author: Ali
  * @Date: 2024-03-06 16:49:25
  * @LastEditors: Ali
- * @LastEditTime: 2024-03-07 17:06:15
+ * @LastEditTime: 2024-03-18 11:12:18
  */
 
 import { REACT_ELEMENT_TYPE } from 'shared/ReactSymbols'
@@ -22,6 +22,10 @@ const ReactElement = (type: Type, key: Key, ref: Ref, props: Props) => {
   return element
 }
 
+export function isValidElement(object: any) {
+  return typeof object === 'object' && object !== null && object.$$typeof === REACT_ELEMENT_TYPE
+}
+
 export const jsx = (type: ElementType, config: any, ...maybeChildren: any) => {
   let key: Key = null
 
@@ -32,17 +36,16 @@ export const jsx = (type: ElementType, config: any, ...maybeChildren: any) => {
     const val = config[prop]
 
     if (prop === 'key') {
-      if (val != undefined) {
+      if (val !== undefined) {
         key = '' + val
       }
       continue
     }
 
-    if (key == 'ref') {
-      if (val != undefined) {
+    if (prop === 'ref') {
+      if (val !== undefined) {
         ref = val
       }
-
       continue
     }
 

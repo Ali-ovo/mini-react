@@ -93,12 +93,13 @@ export const createWorkInProgress = (current: FiberNode, pendingProps: Props): F
   workInProgress.child = current.child
   workInProgress.memoizedProps = current.memoizedProps
   workInProgress.memoizedState = current.memoizedState
+  workInProgress.ref = current.ref
 
   return workInProgress
 }
 
 export function createFiberFromElement(element: ReactElementType): FiberNode {
-  const { type, key, props } = element
+  const { type, key, props, ref } = element
 
   let fiberTag: WorkTag = FunctionComponent
 
@@ -110,6 +111,7 @@ export function createFiberFromElement(element: ReactElementType): FiberNode {
 
   const fiber = new FiberNode(fiberTag, props, key)
   fiber.type = type
+  fiber.ref = ref
 
   return fiber
 }

@@ -2,8 +2,8 @@
  * @Description: react rollup config
  * @Author: Ali
  * @Date: 2024-03-07 15:25:45
- * @LastEditors: ali ali_ovo@qq.com
- * @LastEditTime: 2024-03-16 18:19:15
+ * @LastEditors: Ali
+ * @LastEditTime: 2024-03-18 10:25:58
  */
 
 import { getBaseRollupPlugins, getPackageJSON, resolvePackagePath } from './utils.js'
@@ -25,12 +25,12 @@ export default [
     output: [
       {
         file: `${pkgDistPath}/index.js`,
-        name: 'index.js',
+        name: 'ReactDom',
         format: 'umd'
       },
       {
         file: `${pkgDistPath}/client.js`,
-        name: 'client.js',
+        name: 'client',
         format: 'umd'
       }
     ],
@@ -58,5 +58,19 @@ export default [
         }
       })
     ]
+  },
+
+  // react-test-utils
+  {
+    input: `${pkgPath}/test-utils.ts`,
+    output: [
+      {
+        file: `${pkgDistPath}/test-utils.js`,
+        name: 'testUtils',
+        format: 'umd'
+      }
+    ],
+    external: ['react-dom', 'react'],
+    plugins: getBaseRollupPlugins()
   }
 ]
