@@ -25,6 +25,8 @@ export class FiberNode {
 
   updateQueue: unknown
 
+  deletions: FiberNode[] | null
+
   constructor(tag: WorkTag, pendingProps: Props, key: Key) {
     // Tag is the type of the Fiber
     this.tag = tag
@@ -54,6 +56,8 @@ export class FiberNode {
     // effects
     this.flags = NoFlags
     this.subtreeFlags = NoFlags
+
+    this.deletions = null
   }
 }
 
@@ -86,6 +90,7 @@ export const createWorkInProgress = (current: FiberNode, pendingProps: Props): F
     workInProgress.pendingProps = pendingProps
     workInProgress.flags = NoFlags
     workInProgress.subtreeFlags = NoFlags
+    workInProgress.deletions = null
   }
 
   workInProgress.type = current.type

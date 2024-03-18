@@ -2,8 +2,8 @@
  * @Description: React
  * @Author: Ali
  * @Date: 2024-03-06 16:29:06
- * @LastEditors: Ali
- * @LastEditTime: 2024-03-18 11:13:25
+ * @LastEditors: ali ali_ovo@qq.com
+ * @LastEditTime: 2024-03-18 22:47:13
  */
 
 import { Dispatcher, resolveDispatcher } from './src/currentDispatch'
@@ -23,7 +23,6 @@ export const _SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED = {
 
 export const version = '0.0.0'
 
-// TODO:
-export const createElement = jsx
-
+// TODO 根据环境区分使用jsx/jsxDEV
+export const createElement = jsxDEV
 export const isValidElement = isValidElementFn

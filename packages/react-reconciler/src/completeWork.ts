@@ -2,14 +2,18 @@
  * @Description: The return of recursion
  * @Author: Ali
  * @Date: 2024-03-08 16:41:41
- * @LastEditors: Ali
- * @LastEditTime: 2024-03-15 15:26:41
+ * @LastEditors: ali ali_ovo@qq.com
+ * @LastEditTime: 2024-03-18 21:26:06
  */
 
 import { Container, appendInitialChild, createInstance, createTextInstance } from 'hostConfig'
 import { FiberNode } from './fiber'
 import { FunctionComponent, HostComponent, HostRoot, HostText } from './workTags'
-import { NoFlags } from './fiberFlags'
+import { NoFlags, Update } from './fiberFlags'
+
+function markUpdate(fiber: FiberNode) {
+  fiber.flags |= Update
+}
 
 export const completeWork = (workInProgress: FiberNode) => {
   // The return of recursion
@@ -20,7 +24,7 @@ export const completeWork = (workInProgress: FiberNode) => {
   switch (workInProgress.tag) {
     case HostComponent:
       if (current != null && workInProgress.stateNode) {
-        // 更新 DOM
+        // update
       } else {
         // 构建 DOM
         const instance = createInstance(workInProgress.type, newProps)
@@ -34,7 +38,12 @@ export const completeWork = (workInProgress: FiberNode) => {
 
     case HostText:
       if (current != null && workInProgress.stateNode) {
-        // 更新 DOM
+        // update
+        const oldText = current.memoizedProps.content
+        const newText = newProps.content
+        if (oldText !== newText) {
+          markUpdate(workInProgress)
+        }
       } else {
         // 构建 DOM
         const instance = createTextInstance(newProps.content)

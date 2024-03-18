@@ -2,14 +2,14 @@
  * @Description: commit work
  * @Author: Ali
  * @Date: 2024-03-14 14:41:40
- * @LastEditors: Ali
- * @LastEditTime: 2024-03-15 15:10:53
+ * @LastEditors: ali ali_ovo@qq.com
+ * @LastEditTime: 2024-03-18 22:50:27
  */
 
-import { Container, appendChildToContainer } from 'hostConfig'
+import { Container, appendChildToContainer, commitUpdate, removeChild } from 'hostConfig'
 import { FiberNode, FiberRootNode } from './fiber'
-import { MutationMask, NoFlags, Placement } from './fiberFlags'
-import { HostComponent, HostRoot, HostText } from './workTags'
+import { ChildDeletion, MutationMask, NoFlags, Placement, Update } from './fiberFlags'
+import { FunctionComponent, HostComponent, HostRoot, HostText } from './workTags'
 
 let nextEffect: FiberNode | null = null
 
@@ -50,9 +50,104 @@ function commitMutationEffectsOnFiber(finishedWork: FiberNode) {
     finishedWork.flags &= ~Placement
   }
 
-  // flags UPdate
+  // flags Update
+  if ((flags & Update) !== NoFlags) {
+    commitUpdate(finishedWork)
+    finishedWork.flags &= ~Update
+  }
 
   // flags ChildDeletion
+  if ((flags & ChildDeletion) !== NoFlags) {
+    const deletions = finishedWork.deletions
+    if (deletions !== null) {
+      deletions.forEach(childToDelete => {
+        commitDeletion(childToDelete)
+      })
+    }
+
+    finishedWork.flags &= ~ChildDeletion
+  }
+}
+
+function commitDeletion(childToDelete: FiberNode) {
+  let rootHostNode: FiberNode | null = null
+
+  // 递归子树
+  commitNestedComponent(childToDelete, unmountFiber => {
+    switch (unmountFiber.tag) {
+      case HostComponent:
+        if (rootHostNode === null) {
+          rootHostNode = unmountFiber
+        }
+
+        // TODO: 解绑 ref
+        return
+
+      case HostText:
+        if (rootHostNode === null) {
+          rootHostNode = unmountFiber
+        }
+
+        return
+
+      case FunctionComponent:
+        // TODO useEffect unmount
+
+        return
+
+      default:
+        if (__DEV__) {
+          console.warn('commitDeletion: unknown fiber tag', unmountFiber)
+        }
+
+        break
+    }
+  })
+
+  // 移除 rootHostNode
+  if (rootHostNode !== null) {
+    const hostParent = getHostParent(childToDelete)
+
+    if (hostParent !== null) {
+      removeChild((rootHostNode as FiberNode).stateNode, hostParent)
+    }
+  }
+
+  childToDelete.return = null
+  childToDelete.child = null
+}
+
+function commitNestedComponent(root: FiberNode, onCommitUnmount: (fiber: FiberNode) => void) {
+  let node = root
+
+  while (true) {
+    onCommitUnmount(node)
+
+    if (node.child !== null) {
+      // 向下遍历
+      node.child.return = node
+      node = node.child
+
+      continue
+    }
+
+    if (node === root) {
+      // 遍历完成
+      return
+    }
+
+    while (node.sibling === null) {
+      if (node.return === null || node.return === root) {
+        return
+      }
+
+      // 向上遍历
+      node = node.return
+    }
+
+    node.sibling.return = node.return
+    node = node.sibling
+  }
 }
 
 const commitPlacement = (finishedWork: FiberNode) => {
