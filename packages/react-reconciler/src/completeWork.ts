@@ -2,14 +2,15 @@
  * @Description: The return of recursion
  * @Author: Ali
  * @Date: 2024-03-08 16:41:41
- * @LastEditors: ali ali_ovo@qq.com
- * @LastEditTime: 2024-03-18 21:26:06
+ * @LastEditors: Ali
+ * @LastEditTime: 2024-03-19 13:41:41
  */
 
 import { Container, appendInitialChild, createInstance, createTextInstance } from 'hostConfig'
 import { FiberNode } from './fiber'
 import { FunctionComponent, HostComponent, HostRoot, HostText } from './workTags'
 import { NoFlags, Update } from './fiberFlags'
+import { updateFiberProps } from 'react-dom/src/SyntheticEvent'
 
 function markUpdate(fiber: FiberNode) {
   fiber.flags |= Update
@@ -25,8 +26,10 @@ export const completeWork = (workInProgress: FiberNode) => {
     case HostComponent:
       if (current != null && workInProgress.stateNode) {
         // update
+        // props 是否变化
+        updateFiberProps(workInProgress.stateNode, newProps)
       } else {
-        // 构建 DOM
+        //  mount 构建 DOM
         const instance = createInstance(workInProgress.type, newProps)
 
         appendAllChildren(instance, workInProgress)
@@ -39,7 +42,7 @@ export const completeWork = (workInProgress: FiberNode) => {
     case HostText:
       if (current != null && workInProgress.stateNode) {
         // update
-        const oldText = current.memoizedProps.content
+        const oldText = current.memoizedProps?.content
         const newText = newProps.content
         if (oldText !== newText) {
           markUpdate(workInProgress)

@@ -1,3 +1,10 @@
+/*
+ * @Description: fiber
+ * @Author: Ali
+ * @Date: 2024-03-19 13:12:10
+ * @LastEditors: Ali
+ * @LastEditTime: 2024-03-19 13:36:11
+ */
 import { Props, Key, Ref, ReactElementType } from 'shared/ReactTypes'
 import { FunctionComponent, HostComponent, WorkTag } from './workTags'
 import { Flags, NoFlags } from './fiberFlags'

@@ -2,8 +2,8 @@
  * @Description: start of recursion
  * @Author: Ali
  * @Date: 2024-03-08 16:41:32
- * @LastEditors: ali ali_ovo@qq.com
- * @LastEditTime: 2024-03-16 17:39:49
+ * @LastEditors: Ali
+ * @LastEditTime: 2024-03-19 13:18:32
  */
 
 import { ReactElementType } from 'shared/ReactTypes'
@@ -77,7 +77,6 @@ function reconcileChildren(workInProgress: FiberNode, children?: ReactElementTyp
 
   if (current !== null) {
     // update
-
     workInProgress.child = reconcileChildFibers(workInProgress, current?.child, children)
   } else {
     // mount

@@ -14,7 +14,7 @@ export const resolveDispatcher = (): Dispatcher => {
   const dispatcher = currentDispatcher.current
 
   if (dispatcher === null) {
-    throw new Error(' hook error')
+    throw new Error('hook error')
   }
 
   return dispatcher
