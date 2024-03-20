@@ -2,11 +2,11 @@
  * @Description: fiber
  * @Author: Ali
  * @Date: 2024-03-19 13:12:10
- * @LastEditors: Ali
- * @LastEditTime: 2024-03-19 13:36:11
+ * @LastEditors: ali ali_ovo@qq.com
+ * @LastEditTime: 2024-03-20 22:45:48
  */
 import { Props, Key, Ref, ReactElementType } from 'shared/ReactTypes'
-import { FunctionComponent, HostComponent, WorkTag } from './workTags'
+import { Fragment, FunctionComponent, HostComponent, WorkTag } from './workTags'
 import { Flags, NoFlags } from './fiberFlags'
 import { Container } from 'hostConfig'
 
@@ -38,7 +38,7 @@ export class FiberNode {
     // Tag is the type of the Fiber
     this.tag = tag
 
-    this.key = key
+    this.key = key || null
 
     this.stateNode = null
 
@@ -125,5 +125,10 @@ export function createFiberFromElement(element: ReactElementType): FiberNode {
   fiber.type = type
   fiber.ref = ref
 
+  return fiber
+}
+
+export function createFiberFromFragment(elements: any[], key: Key): FiberNode {
+  const fiber = new FiberNode(Fragment, elements, key)
   return fiber
 }

@@ -2,8 +2,8 @@
  * @Description: commit work
  * @Author: Ali
  * @Date: 2024-03-14 14:41:40
- * @LastEditors: Ali
- * @LastEditTime: 2024-03-20 16:14:46
+ * @LastEditors: ali ali_ovo@qq.com
+ * @LastEditTime: 2024-03-20 22:57:37
  */
 
 import {
@@ -76,24 +76,41 @@ function commitMutationEffectsOnFiber(finishedWork: FiberNode) {
   }
 }
 
+function recordHostChildrenToDelete(childrenToDelete: FiberNode[], unmountFiber: FiberNode) {
+  // 找到第一个root host节点
+  const lastOne = childrenToDelete[childrenToDelete.length - 1]
+
+  if (!lastOne) {
+    childrenToDelete.push(unmountFiber)
+  } else {
+    let node = lastOne.sibling
+
+    while (node !== null) {
+      if (unmountFiber === node) {
+        childrenToDelete.push(unmountFiber)
+      }
+
+      node = node.sibling
+    }
+  }
+
+  // 没找到一个 host节点 判断这个节点是不是 1
+}
+
 function commitDeletion(childToDelete: FiberNode) {
-  let rootHostNode: FiberNode | null = null
+  const rootChildrenToDelete: FiberNode[] = []
 
   // 递归子树
   commitNestedComponent(childToDelete, unmountFiber => {
     switch (unmountFiber.tag) {
       case HostComponent:
-        if (rootHostNode === null) {
-          rootHostNode = unmountFiber
-        }
+        recordHostChildrenToDelete(rootChildrenToDelete, unmountFiber)
 
         // TODO: 解绑 ref
         return
 
       case HostText:
-        if (rootHostNode === null) {
-          rootHostNode = unmountFiber
-        }
+        recordHostChildrenToDelete(rootChildrenToDelete, unmountFiber)
 
         return
 
@@ -112,11 +129,13 @@ function commitDeletion(childToDelete: FiberNode) {
   })
 
   // 移除 rootHostNode
-  if (rootHostNode !== null) {
+  if (rootChildrenToDelete.length) {
     const hostParent = getHostParent(childToDelete)
 
     if (hostParent !== null) {
-      removeChild((rootHostNode as FiberNode).stateNode, hostParent)
+      rootChildrenToDelete.forEach(node => {
+        removeChild(node.stateNode, hostParent)
+      })
     }
   }
 

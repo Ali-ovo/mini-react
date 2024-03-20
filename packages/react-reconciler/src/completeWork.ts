@@ -2,13 +2,13 @@
  * @Description: The return of recursion
  * @Author: Ali
  * @Date: 2024-03-08 16:41:41
- * @LastEditors: Ali
- * @LastEditTime: 2024-03-19 13:41:41
+ * @LastEditors: ali ali_ovo@qq.com
+ * @LastEditTime: 2024-03-20 22:47:24
  */
 
 import { Container, appendInitialChild, createInstance, createTextInstance } from 'hostConfig'
 import { FiberNode } from './fiber'
-import { FunctionComponent, HostComponent, HostRoot, HostText } from './workTags'
+import { Fragment, FunctionComponent, HostComponent, HostRoot, HostText } from './workTags'
 import { NoFlags, Update } from './fiberFlags'
 import { updateFiberProps } from 'react-dom/src/SyntheticEvent'
 
@@ -59,11 +59,8 @@ export const completeWork = (workInProgress: FiberNode) => {
       return null
 
     case HostRoot:
-      bubbleProperties(workInProgress)
-
-      return null
-
     case FunctionComponent:
+    case Fragment:
       bubbleProperties(workInProgress)
 
       return null

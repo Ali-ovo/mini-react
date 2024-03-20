@@ -2,14 +2,14 @@
  * @Description: start of recursion
  * @Author: Ali
  * @Date: 2024-03-08 16:41:32
- * @LastEditors: Ali
- * @LastEditTime: 2024-03-19 13:18:32
+ * @LastEditors: ali ali_ovo@qq.com
+ * @LastEditTime: 2024-03-20 22:46:52
  */
 
 import { ReactElementType } from 'shared/ReactTypes'
 import { FiberNode } from './fiber'
 import { UpdateQueue, processUpdateQueue } from './updateQueue'
-import { FunctionComponent, HostComponent, HostRoot, HostText } from './workTags'
+import { Fragment, FunctionComponent, HostComponent, HostRoot, HostText } from './workTags'
 import { mountChildFibers, reconcileChildFibers } from './childFibers'
 import { renderWithHooks } from './fiberHooks'
 
@@ -28,6 +28,9 @@ export const beginWork = (workInProgress: FiberNode) => {
     case FunctionComponent:
       return updateFunctionComponent(workInProgress)
 
+    case Fragment:
+      return updateFragment(workInProgress)
+
     default:
       if (__DEV__) {
         console.warn('beginWork: unknown fiber tag')
@@ -37,6 +40,12 @@ export const beginWork = (workInProgress: FiberNode) => {
   }
 
   return null
+}
+
+function updateFragment(workInProgress: FiberNode) {
+  const nextChildren = workInProgress.pendingProps
+  reconcileChildren(workInProgress, nextChildren)
+  return workInProgress.child
 }
 
 function updateFunctionComponent(workInProgress: FiberNode) {
