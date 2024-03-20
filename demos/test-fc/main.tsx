@@ -4,22 +4,19 @@ import ReactDOM from 'react-dom'
 function App() {
   const [num, setNum] = useState(1)
 
-  window.setNum = setNum
-  return num === 3 ? (
-    <Child />
-  ) : (
-    <div
+  const arr =
+    num % 2 === 0
+      ? [<li key="1">1</li>, <li key="2">2</li>, <li key="3">3</li>]
+      : [<li key="3">3</li>, <li key="2">2</li>, <li key="1">1</li>]
+  return (
+    <ul
       onClick={() => {
         setNum(num + 1)
       }}
     >
-      {num}
-    </div>
+      {arr}
+    </ul>
   )
-}
-
-function Child() {
-  return <span>my-react</span>
 }
 
 const root = ReactDOM.createRoot(document.getElementById('root'))
