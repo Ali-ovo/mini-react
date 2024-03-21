@@ -12,7 +12,9 @@ function App() {
   return (
     <ul
       onClick={() => {
-        setNum(num + 1)
+        setNum(num => num + 1)
+        setNum(num => num + 1)
+        setNum(num => num + 1)
       }}
     >
       <>

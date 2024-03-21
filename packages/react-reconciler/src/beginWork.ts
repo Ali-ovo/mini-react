@@ -2,8 +2,8 @@
  * @Description: start of recursion
  * @Author: Ali
  * @Date: 2024-03-08 16:41:32
- * @LastEditors: ali ali_ovo@qq.com
- * @LastEditTime: 2024-03-20 22:46:52
+ * @LastEditors: Ali
+ * @LastEditTime: 2024-03-21 15:43:30
  */
 
 import { ReactElementType } from 'shared/ReactTypes'
@@ -12,12 +12,13 @@ import { UpdateQueue, processUpdateQueue } from './updateQueue'
 import { Fragment, FunctionComponent, HostComponent, HostRoot, HostText } from './workTags'
 import { mountChildFibers, reconcileChildFibers } from './childFibers'
 import { renderWithHooks } from './fiberHooks'
+import { Lane } from './fiberLanes'
 
-export const beginWork = (workInProgress: FiberNode) => {
+export const beginWork = (workInProgress: FiberNode, renderLane: Lane) => {
   // compare, return child node
   switch (workInProgress.tag) {
     case HostRoot:
-      return updateHostRoot(workInProgress)
+      return updateHostRoot(workInProgress, renderLane)
 
     case HostComponent:
       return updateHostComponent(workInProgress)
@@ -26,7 +27,7 @@ export const beginWork = (workInProgress: FiberNode) => {
       return null
 
     case FunctionComponent:
-      return updateFunctionComponent(workInProgress)
+      return updateFunctionComponent(workInProgress, renderLane)
 
     case Fragment:
       return updateFragment(workInProgress)
@@ -48,20 +49,20 @@ function updateFragment(workInProgress: FiberNode) {
   return workInProgress.child
 }
 
-function updateFunctionComponent(workInProgress: FiberNode) {
-  const nextChildren = renderWithHooks(workInProgress)
+function updateFunctionComponent(workInProgress: FiberNode, renderLane: Lane) {
+  const nextChildren = renderWithHooks(workInProgress, renderLane)
   reconcileChildren(workInProgress, nextChildren)
   return workInProgress.child
 }
 
-function updateHostRoot(workInProgress: FiberNode) {
+function updateHostRoot(workInProgress: FiberNode, renderLane: Lane) {
   const baseState = workInProgress.memoizedState
 
   const updateQueue = workInProgress.updateQueue as UpdateQueue<Element>
   const pending = updateQueue.shard.pending
   updateQueue.shard.pending = null
 
-  const { memoizedState } = processUpdateQueue(baseState, pending)
+  const { memoizedState } = processUpdateQueue(baseState, pending, renderLane)
 
   workInProgress.memoizedState = memoizedState
 

@@ -2,13 +2,14 @@
  * @Description: fiber
  * @Author: Ali
  * @Date: 2024-03-19 13:12:10
- * @LastEditors: ali ali_ovo@qq.com
- * @LastEditTime: 2024-03-20 22:45:48
+ * @LastEditors: Ali
+ * @LastEditTime: 2024-03-21 15:01:46
  */
 import { Props, Key, Ref, ReactElementType } from 'shared/ReactTypes'
 import { Fragment, FunctionComponent, HostComponent, WorkTag } from './workTags'
 import { Flags, NoFlags } from './fiberFlags'
 import { Container } from 'hostConfig'
+import { Lane, Lanes, NoLane, NoLanes } from './fiberLanes'
 
 export class FiberNode {
   type: any
@@ -72,12 +73,16 @@ export class FiberRootNode {
   container: Container
   current: FiberNode
   finishedWork: FiberNode | null
+  pendingLanes: Lanes
+  finishedLane: Lane
 
   constructor(container: Container, hostRootFiber: FiberNode) {
     this.container = container
     this.current = hostRootFiber
     hostRootFiber.stateNode = this
     this.finishedWork = null
+    this.pendingLanes = NoLanes
+    this.finishedLane = NoLane
   }
 }
 
