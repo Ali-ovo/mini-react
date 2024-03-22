@@ -2,8 +2,8 @@
  * @Description: React
  * @Author: Ali
  * @Date: 2024-03-06 16:29:06
- * @LastEditors: ali ali_ovo@qq.com
- * @LastEditTime: 2024-03-18 22:47:13
+ * @LastEditors: Ali
+ * @LastEditTime: 2024-03-22 15:41:58
  */
 
 import { Dispatcher, resolveDispatcher } from './src/currentDispatch'
@@ -14,6 +14,12 @@ export const useState: Dispatcher['useState'] = initialState => {
   const dispatcher = resolveDispatcher()
 
   return dispatcher.useState(initialState)
+}
+
+export const useEffect: Dispatcher['useEffect'] = (create, deps) => {
+  const dispatcher = resolveDispatcher()
+
+  return dispatcher.useEffect(create, deps)
 }
 
 // 内部数据共享层

@@ -1,5 +1,10 @@
 import { REACT_ELEMENT_TYPE, REACT_FRAGMENT_TYPE } from 'shared/ReactSymbols'
-import { FiberNode, createFiberFromElement, createFiberFromFragment, createWorkInProgress } from './fiber'
+import {
+  FiberNode,
+  createFiberFromElement,
+  createFiberFromFragment,
+  createWorkInProgress
+} from './fiber'
 import { Key, Props, ReactElementType } from 'shared/ReactTypes'
 import { Fragment, HostText } from './workTags'
 import { ChildDeletion, Placement } from './fiberFlags'
@@ -34,7 +39,11 @@ function ChildReconciler(shouldTrackEffects: boolean) {
     }
   }
 
-  function reconcileSingleElement(returnFiber: FiberNode, currentFiber: FiberNode | null, element: ReactElementType) {
+  function reconcileSingleElement(
+    returnFiber: FiberNode,
+    currentFiber: FiberNode | null,
+    element: ReactElementType
+  ) {
     const key = element.key
 
     while (currentFiber !== null) {
@@ -89,7 +98,11 @@ function ChildReconciler(shouldTrackEffects: boolean) {
     return fiber
   }
 
-  function reconcileSingleTextNode(returnFiber: FiberNode, currentFiber: FiberNode | null, content: string | number) {
+  function reconcileSingleTextNode(
+    returnFiber: FiberNode,
+    currentFiber: FiberNode | null,
+    content: string | number
+  ) {
     while (currentFiber !== null) {
       // update
       if (currentFiber.tag === HostText) {
@@ -122,7 +135,11 @@ function ChildReconciler(shouldTrackEffects: boolean) {
     return fiber
   }
 
-  function reconcileChildrenArray(returnFiber: FiberNode, currentFirstChild: FiberNode | null, newChild: any) {
+  function reconcileChildrenArray(
+    returnFiber: FiberNode,
+    currentFirstChild: FiberNode | null,
+    newChild: any
+  ) {
     // 最后一个可复用的 fiber 的 index
     let lastPlacedIndex: number = 0
 
@@ -221,7 +238,13 @@ function ChildReconciler(shouldTrackEffects: boolean) {
       switch (element.$$typeof) {
         case REACT_ELEMENT_TYPE:
           if (element.type === REACT_FRAGMENT_TYPE) {
-            return updateFragment(returnFiber, before, element.props.children, keyToUse, existingChildren)
+            return updateFragment(
+              returnFiber,
+              before,
+              element.props.children,
+              keyToUse,
+              existingChildren
+            )
           }
 
           if (before) {
@@ -248,7 +271,11 @@ function ChildReconciler(shouldTrackEffects: boolean) {
     return null
   }
 
-  return function reconcileChildFibers(returnFiber: FiberNode, currentFiber: FiberNode | null, newChild: any) {
+  return function reconcileChildFibers(
+    returnFiber: FiberNode,
+    currentFiber: FiberNode | null,
+    newChild: any
+  ) {
     // Fragment
     const isUnkeyedTopLevelFragment =
       typeof newChild === 'object' &&

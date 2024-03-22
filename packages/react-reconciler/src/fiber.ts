@@ -3,14 +3,19 @@
  * @Author: Ali
  * @Date: 2024-03-19 13:12:10
  * @LastEditors: Ali
- * @LastEditTime: 2024-03-21 15:01:46
+ * @LastEditTime: 2024-03-22 16:00:53
  */
 import { Props, Key, Ref, ReactElementType } from 'shared/ReactTypes'
 import { Fragment, FunctionComponent, HostComponent, WorkTag } from './workTags'
 import { Flags, NoFlags } from './fiberFlags'
 import { Container } from 'hostConfig'
 import { Lane, Lanes, NoLane, NoLanes } from './fiberLanes'
+import { Effect } from './fiberHooks'
 
+export interface PendingPassiveEffects {
+  unmount: Effect[]
+  update: Effect[]
+}
 export class FiberNode {
   type: any
   tag: WorkTag
@@ -75,6 +80,7 @@ export class FiberRootNode {
   finishedWork: FiberNode | null
   pendingLanes: Lanes
   finishedLane: Lane
+  pendingPassiveEffects: PendingPassiveEffects
 
   constructor(container: Container, hostRootFiber: FiberNode) {
     this.container = container
@@ -83,6 +89,11 @@ export class FiberRootNode {
     this.finishedWork = null
     this.pendingLanes = NoLanes
     this.finishedLane = NoLane
+
+    this.pendingPassiveEffects = {
+      unmount: [],
+      update: []
+    }
   }
 }
 
