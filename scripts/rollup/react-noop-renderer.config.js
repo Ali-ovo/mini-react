@@ -3,40 +3,46 @@
  * @Author: Ali
  * @Date: 2024-03-07 15:25:45
  * @LastEditors: ali ali_ovo@qq.com
- * @LastEditTime: 2024-03-23 17:02:17
+ * @LastEditTime: 2024-03-23 17:04:05
  */
 
 import { getBaseRollupPlugins, getPackageJSON, resolvePackagePath } from './utils.js'
 import generatePackageJson from 'rollup-plugin-generate-package-json'
 import alias from '@rollup/plugin-alias'
 
-const { name, module, peerDependencies } = getPackageJSON('react-dom')
+const { name, module, peerDependencies } = getPackageJSON('react-noop-renderer')
 
-// react-dom package path
+// react-noop-renderer package path
 const pkgPath = resolvePackagePath(name)
 
-// react-dom output path
+// react-noop-renderer output path
 const pkgDistPath = resolvePackagePath(name, true)
 
 export default [
-  // react-dom
+  // react-noop-renderer
   {
     input: `${pkgPath}/${module}`,
     output: [
       {
         file: `${pkgDistPath}/index.js`,
-        name: 'ReactDom',
-        format: 'umd'
-      },
-      {
-        file: `${pkgDistPath}/client.js`,
-        name: 'client',
+        name: 'ReactNoopRenderer',
         format: 'umd'
       }
     ],
     external: [...Object.keys(peerDependencies), 'scheduler'],
     plugins: [
-      ...getBaseRollupPlugins(),
+      ...getBaseRollupPlugins({
+        typescript: {
+          exclude: ['./packages/react-dom/**/*'],
+          tsconfigOverride: {
+            compilerOptions: {
+              paths: {
+                hostConfig: [`./${name}/src/hostConfig.ts`]
+              }
+            }
+          }
+        }
+      }),
       alias({
         entries: {
           hostConfig: `${pkgPath}/src/hostConfig.ts`
@@ -58,19 +64,5 @@ export default [
         }
       })
     ]
-  },
-
-  // react-test-utils
-  {
-    input: `${pkgPath}/test-utils.ts`,
-    output: [
-      {
-        file: `${pkgDistPath}/test-utils.js`,
-        name: 'testUtils',
-        format: 'umd'
-      }
-    ],
-    external: ['react-dom', 'react'],
-    plugins: getBaseRollupPlugins()
   }
 ]

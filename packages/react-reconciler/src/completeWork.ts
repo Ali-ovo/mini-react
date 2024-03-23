@@ -3,10 +3,16 @@
  * @Author: Ali
  * @Date: 2024-03-08 16:41:41
  * @LastEditors: ali ali_ovo@qq.com
- * @LastEditTime: 2024-03-20 22:47:24
+ * @LastEditTime: 2024-03-23 17:11:03
  */
 
-import { Container, appendInitialChild, createInstance, createTextInstance } from 'hostConfig'
+import {
+  Container,
+  Instance,
+  appendInitialChild,
+  createInstance,
+  createTextInstance
+} from 'hostConfig'
 import { FiberNode } from './fiber'
 import { Fragment, FunctionComponent, HostComponent, HostRoot, HostText } from './workTags'
 import { NoFlags, Update } from './fiberFlags'
@@ -27,7 +33,8 @@ export const completeWork = (workInProgress: FiberNode) => {
       if (current != null && workInProgress.stateNode) {
         // update
         // props 是否变化
-        updateFiberProps(workInProgress.stateNode, newProps)
+        // updateFiberProps(workInProgress.stateNode, newProps)
+        markUpdate(workInProgress)
       } else {
         //  mount 构建 DOM
         const instance = createInstance(workInProgress.type, newProps)
@@ -73,7 +80,7 @@ export const completeWork = (workInProgress: FiberNode) => {
   }
 }
 
-function appendAllChildren(parent: Container, workInProgress: FiberNode) {
+function appendAllChildren(parent: Container | Instance, workInProgress: FiberNode) {
   let node = workInProgress.child
 
   while (node !== null) {
