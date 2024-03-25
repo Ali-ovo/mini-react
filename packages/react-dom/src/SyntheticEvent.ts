@@ -2,8 +2,8 @@ import { Container } from 'hostConfig'
 import {
   unstable_ImmediatePriority,
   unstable_NormalPriority,
-  unstable_UserBlockingPriority,
-  unstable_runWithPriority
+  unstable_runWithPriority,
+  unstable_UserBlockingPriority
 } from 'scheduler'
 import { Props } from 'shared/ReactTypes'
 

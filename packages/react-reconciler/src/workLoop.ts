@@ -195,7 +195,7 @@ function renderRoot(root: FiberRootNode, lane: Lane, shouldTimeSlice: boolean) {
 
   do {
     try {
-      shouldTimeSlice ? workLoopConcurrent() : workLooSync()
+      shouldTimeSlice ? workLoopConcurrent() : workLoopSync()
       break
     } catch (e) {
       if (__DEV__) {
@@ -301,7 +301,7 @@ function flushPassiveEffects(pendingPassiveEffects: PendingPassiveEffects) {
   return didFlushPassiveEffect
 }
 
-function workLooSync() {
+function workLoopSync() {
   while (workInProgress !== null) {
     preformUnitOfWork(workInProgress)
   }

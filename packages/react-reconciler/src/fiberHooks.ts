@@ -2,14 +2,15 @@
  * @Description: fiber hooks
  * @Author: Ali
  * @Date: 2024-03-15 15:24:15
- * @LastEditors: Ali
- * @LastEditTime: 2024-03-22 16:33:23
+ * @LastEditors: ali ali_ovo@qq.com
+ * @LastEditTime: 2024-03-25 22:21:24
  */
 
 import internals from 'shared/internals'
 import { FiberNode } from './fiber'
 import { Dispatch, Dispatcher } from 'react/src/currentDispatch'
 import {
+  Update,
   UpdateQueue,
   createUpdate,
   createUpdateQueue,
@@ -31,6 +32,8 @@ interface Hook {
   memoizedState: any
   updateQueue: unknown
   next: Hook | null
+  baseState: any
+  baseQueue: Update<any> | null
 }
 
 export interface Effect {
@@ -202,12 +205,38 @@ function updateState<State>(): [State, Dispatch<State>] {
 
   // 计算 state
   const queue = hook.updateQueue as UpdateQueue<State>
-  const pending = queue.shard.pending
-  queue.shard.pending = null
+  const baseState = hook.baseState
 
+  const pending = queue.shard.pending
+  const current = currentHook as Hook
+  let baseQueue = current.baseQueue
+
+  // update保存在current
   if (pending !== null) {
-    const { memoizedState } = processUpdateQueue(hook.memoizedState, pending, renderLane)
-    hook.memoizedState = memoizedState
+    if (baseQueue !== null) {
+      const baseFirst = baseQueue.next
+      const pendingFirst = pending.next
+
+      baseQueue.next = pendingFirst
+      pending.next = baseFirst
+    }
+
+    baseQueue = pending
+
+    // 保存在current
+    current.baseQueue = pending
+    queue.shard.pending = null
+
+    if (baseQueue !== null) {
+      const {
+        memoizedState,
+        baseQueue: newBaseQueue,
+        baseState: newBaseState
+      } = processUpdateQueue(baseState, baseQueue, renderLane)
+      hook.memoizedState = memoizedState
+      hook.baseState = newBaseState
+      hook.baseQueue = newBaseQueue
+    }
   }
 
   return [hook.memoizedState, queue.dispatch as Dispatch<State>]
@@ -251,7 +280,9 @@ function mountWorkInprogressHook(): Hook {
   const hook: Hook = {
     memoizedState: null,
     updateQueue: null,
-    next: null
+    next: null,
+    baseQueue: null,
+    baseState: null
   }
 
   if (workInprogressHook === null) {
@@ -298,7 +329,9 @@ function updateWorkInprogressHook(): Hook {
   const newHook: Hook = {
     memoizedState: currentHook?.memoizedState,
     updateQueue: currentHook?.updateQueue,
-    next: null
+    next: null,
+    baseQueue: currentHook.baseQueue,
+    baseState: currentHook.baseState
   }
 
   if (workInprogressHook === null) {
