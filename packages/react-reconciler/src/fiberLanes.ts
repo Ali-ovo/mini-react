@@ -6,6 +6,7 @@ import {
   unstable_getCurrentPriorityLevel
 } from 'scheduler'
 import { FiberRootNode } from './fiber'
+import currentBatchConfig from 'react/src/currentBatchConfig'
 
 export type Lane = number
 export type Lanes = number
@@ -19,6 +20,11 @@ export const TransitionLane = 0b01000
 export const IdleLane = 0b10000
 
 export function requestUpdateLane() {
+  const isTransition = currentBatchConfig.transition !== null
+  if (isTransition) {
+    return TransitionLane
+  }
+
   // 从上下文获取优先级
   const currentSchedulerPriority = unstable_getCurrentPriorityLevel()
   const lane = schedulerPriorityToLane(currentSchedulerPriority)
