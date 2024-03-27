@@ -2,8 +2,8 @@
  * @Description: The return of recursion
  * @Author: Ali
  * @Date: 2024-03-08 16:41:41
- * @LastEditors: ali ali_ovo@qq.com
- * @LastEditTime: 2024-03-23 17:11:03
+ * @LastEditors: Ali
+ * @LastEditTime: 2024-03-27 11:19:41
  */
 
 import {
@@ -15,11 +15,14 @@ import {
 } from 'hostConfig'
 import { FiberNode } from './fiber'
 import { Fragment, FunctionComponent, HostComponent, HostRoot, HostText } from './workTags'
-import { NoFlags, Update } from './fiberFlags'
-import { updateFiberProps } from 'react-dom/src/SyntheticEvent'
+import { NoFlags, Ref, Update } from './fiberFlags'
 
 function markUpdate(fiber: FiberNode) {
   fiber.flags |= Update
+}
+
+function markRef(fiber: FiberNode) {
+  fiber.flags |= Ref
 }
 
 export const completeWork = (workInProgress: FiberNode) => {
@@ -35,12 +38,21 @@ export const completeWork = (workInProgress: FiberNode) => {
         // props 是否变化
         // updateFiberProps(workInProgress.stateNode, newProps)
         markUpdate(workInProgress)
+
+        if (current.ref !== workInProgress.ref) {
+          markRef(workInProgress)
+        }
       } else {
         //  mount 构建 DOM
         const instance = createInstance(workInProgress.type, newProps)
 
         appendAllChildren(instance, workInProgress)
         workInProgress.stateNode = instance
+
+        // 标记 ref
+        if (workInProgress.ref !== null) {
+          markRef(workInProgress)
+        }
       }
 
       bubbleProperties(workInProgress)

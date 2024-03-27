@@ -3,7 +3,7 @@
  * @Author: Ali
  * @Date: 2024-03-08 16:41:32
  * @LastEditors: Ali
- * @LastEditTime: 2024-03-21 15:43:30
+ * @LastEditTime: 2024-03-27 12:32:06
  */
 
 import { ReactElementType } from 'shared/ReactTypes'
@@ -13,6 +13,7 @@ import { Fragment, FunctionComponent, HostComponent, HostRoot, HostText } from '
 import { mountChildFibers, reconcileChildFibers } from './childFibers'
 import { renderWithHooks } from './fiberHooks'
 import { Lane } from './fiberLanes'
+import { Ref } from './fiberFlags'
 
 export const beginWork = (workInProgress: FiberNode, renderLane: Lane) => {
   // compare, return child node
@@ -77,6 +78,7 @@ function updateHostComponent(workInProgress: FiberNode) {
   const nextProps = workInProgress.pendingProps
   const nextChildren = nextProps.children
 
+  markRef(workInProgress.alternate, workInProgress)
   reconcileChildren(workInProgress, nextChildren)
 
   return workInProgress.child
@@ -91,5 +93,13 @@ function reconcileChildren(workInProgress: FiberNode, children?: ReactElementTyp
   } else {
     // mount
     workInProgress.child = mountChildFibers(workInProgress, null, children)
+  }
+}
+
+function markRef(current: FiberNode | null, workInProgress: FiberNode) {
+  const ref = workInProgress.ref
+
+  if ((current === null && ref !== null) || (current !== null && current.ref !== ref)) {
+    workInProgress.flags |= Ref
   }
 }

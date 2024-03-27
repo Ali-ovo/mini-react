@@ -4,6 +4,7 @@ import {
   commitHookEffectListCreate,
   commitHookEffectListDestroy,
   commitHookEffectListUnmount,
+  commitLayoutEffects,
   commitMutationEffects
 } from './commitWork'
 import { completeWork } from './completeWork'
@@ -54,6 +55,7 @@ export function scheduleUpdateOnFiber(fiber: FiberNode, lane: Lane) {
 function ensureRootIsScheduled(root: FiberRootNode) {
   const updateLane = getHighestPriorityLane(root.pendingLanes)
   const existingCallback = root.callbackNode
+
   if (updateLane === NoLane) {
     if (existingCallback !== null) {
       unstable_cancelCallback(existingCallback)
@@ -260,9 +262,8 @@ function commitRoot(root: FiberRootNode) {
     }
   }
 
-  const subtreeHasEffect = (finishedWork.subtreeFlags & MutationMask) !== NoFlags
-
-  const rootHasEffect = (finishedWork.flags & MutationMask) !== NoFlags
+  const subtreeHasEffect = (finishedWork.subtreeFlags & (MutationMask | PassiveMask)) !== NoFlags
+  const rootHasEffect = (finishedWork.flags & (MutationMask | PassiveMask)) !== NoFlags
 
   if (subtreeHasEffect || rootHasEffect) {
     // before mutation
@@ -272,6 +273,7 @@ function commitRoot(root: FiberRootNode) {
     root.current = finishedWork
 
     // layout
+    commitLayoutEffects(finishedWork, root)
   } else {
     root.current = finishedWork
   }

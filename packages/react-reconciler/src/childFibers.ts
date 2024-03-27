@@ -49,51 +49,44 @@ function ChildReconciler(shouldTrackEffects: boolean) {
     while (currentFiber !== null) {
       // update
       if (currentFiber.key === key) {
-        // same key
-
+        // key相同
         if (element.$$typeof === REACT_ELEMENT_TYPE) {
           if (currentFiber.type === element.type) {
             let props = element.props
             if (element.type === REACT_FRAGMENT_TYPE) {
               props = element.props.children
             }
-
-            // same type
+            // type相同
             const existing = useFiber(currentFiber, props)
             existing.return = returnFiber
-
-            // 当前节点可以服用 需要删除其他节点
+            // 当前节点可复用，标记剩下的节点删除
             deleteRemainingChildren(returnFiber, currentFiber.sibling)
             return existing
           }
 
-          // key not match and type not match delete all
-          deleteChild(returnFiber, currentFiber)
-
+          // key相同，type不同 删掉所有旧的
+          deleteRemainingChildren(returnFiber, currentFiber)
           break
         } else {
           if (__DEV__) {
-            console.warn('reconcileSingleElement: unknown element type', element)
+            console.warn('还未实现的react类型', element)
             break
           }
         }
       } else {
-        // key not match delete
+        // key不同，删掉旧的
         deleteChild(returnFiber, currentFiber)
 
         currentFiber = currentFiber.sibling
       }
     }
-
-    // 根据 element 创建 fiber
+    // 根据element创建fiber
     let fiber
-
     if (element.type === REACT_FRAGMENT_TYPE) {
       fiber = createFiberFromFragment(element.props.children, key)
     } else {
       fiber = createFiberFromElement(element)
     }
-
     fiber.return = returnFiber
     return fiber
   }
@@ -297,7 +290,7 @@ function ChildReconciler(shouldTrackEffects: boolean) {
           return placeSingleChild(reconcileSingleElement(returnFiber, currentFiber, newChild))
         default:
           if (__DEV__) {
-            console.warn('reconcileChildFibers: unknown child type', newChild)
+            console.warn('未实现的reconcile类型', newChild)
           }
           break
       }

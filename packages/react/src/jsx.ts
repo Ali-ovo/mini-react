@@ -2,15 +2,20 @@
  * @Description: ReactElement
  * @Author: Ali
  * @Date: 2024-03-06 16:49:25
- * @LastEditors: ali ali_ovo@qq.com
- * @LastEditTime: 2024-03-20 22:58:36
+ * @LastEditors: Ali
+ * @LastEditTime: 2024-03-27 12:17:05
  */
 
 import { REACT_ELEMENT_TYPE, REACT_FRAGMENT_TYPE } from 'shared/ReactSymbols'
 import { ReactElementType, Key, Ref, Type, Props, ElementType } from 'shared/ReactTypes'
 
-const ReactElement = (type: Type, key: Key, ref: Ref, props: Props) => {
-  const element: ReactElementType = {
+const ReactElement = function (
+  type: Type,
+  key: Key,
+  ref: Ref | null,
+  props: Props
+): ReactElementType {
+  const element = {
     $$typeof: REACT_ELEMENT_TYPE,
     type,
     key,
@@ -30,7 +35,8 @@ export const jsx = (type: ElementType, config: any, ...maybeChildren: any) => {
   let key: Key = null
 
   const props: Props = {}
-  let ref: Ref = null
+
+  let ref: Ref | null = null
 
   for (const prop in config) {
     const val = config[prop]
@@ -49,7 +55,7 @@ export const jsx = (type: ElementType, config: any, ...maybeChildren: any) => {
       continue
     }
 
-    if (Object.hasOwn(config, prop)) {
+    if ({}.hasOwnProperty.call(config, prop)) {
       props[prop] = val
     }
   }
@@ -71,27 +77,24 @@ export const jsxDEV = (type: ElementType, config: any) => {
   let key: Key = null
 
   const props: Props = {}
-  let ref: Ref = null
+  let ref: Ref | null = null
 
   for (const prop in config) {
     const val = config[prop]
 
     if (prop === 'key') {
-      if (val != undefined) {
+      if (val !== undefined) {
         key = '' + val
       }
       continue
     }
-
-    if (key == 'ref') {
-      if (val != undefined) {
+    if (prop === 'ref') {
+      if (val !== undefined) {
         ref = val
       }
-
       continue
     }
-
-    if (Object.hasOwn(config, prop)) {
+    if ({}.hasOwnProperty.call(config, prop)) {
       props[prop] = val
     }
   }

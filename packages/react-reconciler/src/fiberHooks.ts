@@ -3,7 +3,7 @@
  * @Author: Ali
  * @Date: 2024-03-15 15:24:15
  * @LastEditors: Ali
- * @LastEditTime: 2024-03-26 14:47:43
+ * @LastEditTime: 2024-03-27 12:37:19
  */
 
 import internals from 'shared/internals'
@@ -91,13 +91,27 @@ export function renderWithHooks(workInProgress: FiberNode, lane: Lane) {
 const HooksDispatcherOnMount: Dispatcher = {
   useState: mountState,
   useEffect: mountEffect,
-  useTransition: mountTransition
+  useTransition: mountTransition,
+  useRef: mountRef
 }
 
 const HooksDispatcherOnUpdate: Dispatcher = {
   useState: updateState,
   useEffect: updateEffect,
-  useTransition: updateTransition
+  useTransition: updateTransition,
+  useRef: updateRef
+}
+
+function mountRef<T>(initialValue: T): { current: T } {
+  const hook = mountWorkInprogressHook()
+  const ref = { current: initialValue }
+  hook.memoizedState = ref
+  return ref
+}
+
+function updateRef<T>(initialValue: T): { current: T } {
+  const hook = updateWorkInprogressHook()
+  return hook.memoizedState
 }
 
 function mountEffect(create: EffectCallback | void, deps: EffectDeps) {
@@ -361,8 +375,8 @@ function updateWorkInprogressHook(): Hook {
   currentHook = nextCurrentHook as Hook
 
   const newHook: Hook = {
-    memoizedState: currentHook?.memoizedState,
-    updateQueue: currentHook?.updateQueue,
+    memoizedState: currentHook.memoizedState,
+    updateQueue: currentHook.updateQueue,
     next: null,
     baseQueue: currentHook.baseQueue,
     baseState: currentHook.baseState

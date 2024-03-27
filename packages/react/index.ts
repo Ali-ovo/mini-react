@@ -3,7 +3,7 @@
  * @Author: Ali
  * @Date: 2024-03-06 16:29:06
  * @LastEditors: Ali
- * @LastEditTime: 2024-03-26 14:37:43
+ * @LastEditTime: 2024-03-27 12:18:43
  */
 
 import { Dispatcher, resolveDispatcher } from './src/currentDispatch'
@@ -13,20 +13,22 @@ import currentBatchConfig from './src/currentBatchConfig'
 
 export const useState: Dispatcher['useState'] = initialState => {
   const dispatcher = resolveDispatcher()
-
   return dispatcher.useState(initialState)
 }
 
 export const useEffect: Dispatcher['useEffect'] = (create, deps) => {
   const dispatcher = resolveDispatcher()
-
   return dispatcher.useEffect(create, deps)
 }
 
 export const useTransition: Dispatcher['useTransition'] = () => {
   const dispatcher = resolveDispatcher()
-
   return dispatcher.useTransition()
+}
+
+export const useRef: Dispatcher['useRef'] = initialValue => {
+  const dispatcher = resolveDispatcher()
+  return dispatcher.useRef(initialValue)
 }
 
 // 内部数据共享层

@@ -3,7 +3,7 @@
  * @Author: Ali
  * @Date: 2024-03-19 13:12:10
  * @LastEditors: Ali
- * @LastEditTime: 2024-03-22 16:00:53
+ * @LastEditTime: 2024-03-27 12:23:32
  */
 import { Props, Key, Ref, ReactElementType } from 'shared/ReactTypes'
 import { Fragment, FunctionComponent, HostComponent, WorkTag } from './workTags'
@@ -23,7 +23,7 @@ export class FiberNode {
   pendingProps: Props
   key: Key
   stateNode: any
-  ref: Ref
+  ref: Ref | null
 
   return: FiberNode | null
   sibling: FiberNode | null
