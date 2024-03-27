@@ -9,7 +9,7 @@ export interface Update<State> {
 }
 
 export interface UpdateQueue<State> {
-  shard: {
+  shared: {
     pending: Update<State> | null
   }
 
@@ -26,7 +26,7 @@ export const createUpdate = <State>(action: Action<State>, lane: Lane): Update<S
 
 export const createUpdateQueue = <State>() => {
   return {
-    shard: {
+    shared: {
       pending: null
     },
     dispatch: null
@@ -34,7 +34,7 @@ export const createUpdateQueue = <State>() => {
 }
 
 export const enqueueUpdate = <State>(updateQueue: UpdateQueue<State>, update: Update<State>) => {
-  const pending = updateQueue.shard.pending
+  const pending = updateQueue.shared.pending
   if (pending === null) {
     // a -> a
     update.next = update
@@ -44,7 +44,7 @@ export const enqueueUpdate = <State>(updateQueue: UpdateQueue<State>, update: Up
     pending.next = update
   }
 
-  updateQueue.shard.pending = update
+  updateQueue.shared.pending = update
 }
 
 export const processUpdateQueue = <State>(

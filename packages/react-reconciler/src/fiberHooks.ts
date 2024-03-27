@@ -224,7 +224,7 @@ function updateState<State>(): [State, Dispatch<State>] {
   const queue = hook.updateQueue as UpdateQueue<State>
   const baseState = hook.baseState
 
-  const pending = queue.shard.pending
+  const pending = queue.shared.pending
   const current = currentHook as Hook
   let baseQueue = current.baseQueue
 
@@ -242,7 +242,7 @@ function updateState<State>(): [State, Dispatch<State>] {
 
     // 保存在current
     current.baseQueue = pending
-    queue.shard.pending = null
+    queue.shared.pending = null
   }
 
   if (baseQueue !== null) {

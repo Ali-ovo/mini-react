@@ -52,6 +52,7 @@ export function scheduleUpdateOnFiber(fiber: FiberNode, lane: Lane) {
   ensureRootIsScheduled(root)
 }
 
+// schedule阶段入口
 function ensureRootIsScheduled(root: FiberRootNode) {
   const updateLane = getHighestPriorityLane(root.pendingLanes)
   const existingCallback = root.callbackNode
@@ -168,7 +169,7 @@ function performConcurrentWorkOnRoot(root: FiberRootNode, didTimeout: boolean): 
 function performSyncWorkOnRoot(root: FiberRootNode) {
   const nextLane = getHighestPriorityLane(root.pendingLanes)
   if (nextLane !== SyncLane) {
-    // 其他 SyncLane 低的优先级
+    // 其他比SyncLane低的优先级
     // NoLane
     ensureRootIsScheduled(root)
     return
@@ -182,20 +183,20 @@ function performSyncWorkOnRoot(root: FiberRootNode) {
     root.finishedLane = nextLane
     workInProgressRootRenderLane = NoLane
 
-    // dom update
+    // wip fiberNode树 树中的flags
     commitRoot(root)
   } else if (__DEV__) {
-    console.warn('performSyncWorkOnRoot: 还未实现同步更新结束的状态')
+    console.error('还未实现的同步更新结束状态')
   }
 }
 
 function renderRoot(root: FiberRootNode, lane: Lane, shouldTimeSlice: boolean) {
   if (__DEV__) {
-    console.log('renderRoot', root, lane, shouldTimeSlice ? '并发' : '同步')
+    console.log(`开始${shouldTimeSlice ? '并发' : '同步'}更新`, root)
   }
 
   if (workInProgressRootRenderLane !== lane) {
-    // initialize
+    // 初始化
     prepareFreshStack(root, lane)
   }
 
@@ -205,23 +206,21 @@ function renderRoot(root: FiberRootNode, lane: Lane, shouldTimeSlice: boolean) {
       break
     } catch (e) {
       if (__DEV__) {
-        console.warn('workLoop error', e)
+        console.warn('workLoop发生错误', e)
       }
       workInProgress = null
     }
   } while (true)
 
-  // 中断
+  // 中断执行
   if (shouldTimeSlice && workInProgress !== null) {
     return RootInComplete
   }
-
-  // 完成
+  // render阶段执行完
   if (!shouldTimeSlice && workInProgress !== null && __DEV__) {
-    console.error('renderRoot: 结束时 workInProgress 不为空')
+    console.error(`render阶段结束时wip不应该不是null`)
   }
-
-  // TODO: error
+  // TODO 报错
   return RootCompleted
 }
 
@@ -233,15 +232,15 @@ function commitRoot(root: FiberRootNode) {
   }
 
   if (__DEV__) {
-    console.log('commitRoot', finishedWork)
+    console.warn('commit阶段开始', finishedWork)
   }
-
   const lane = root.finishedLane
+
   if (lane === NoLane && __DEV__) {
-    console.warn('commitRoot: lane must not be a NoLane')
+    console.error('commit阶段finishedLane不应该是NoLane')
   }
 
-  // reset
+  // 重置
   root.finishedWork = null
   root.finishedLane = NoLane
 
@@ -253,26 +252,28 @@ function commitRoot(root: FiberRootNode) {
   ) {
     if (!rootDoesHasPassiveEffects) {
       rootDoesHasPassiveEffects = true
-
       // 调度副作用
       scheduleCallback(NormalPriority, () => {
+        // 执行副作用
         flushPassiveEffects(root.pendingPassiveEffects)
         return
       })
     }
   }
 
+  // 判断是否存在3个子阶段需要执行的操作
+  // root flags root subtreeFlags
   const subtreeHasEffect = (finishedWork.subtreeFlags & (MutationMask | PassiveMask)) !== NoFlags
   const rootHasEffect = (finishedWork.flags & (MutationMask | PassiveMask)) !== NoFlags
 
   if (subtreeHasEffect || rootHasEffect) {
-    // before mutation
-    // mutation
+    // beforeMutation
+    // mutation Placement
     commitMutationEffects(finishedWork, root)
 
     root.current = finishedWork
 
-    // layout
+    // 阶段3/3:Layout
     commitLayoutEffects(finishedWork, root)
   } else {
     root.current = finishedWork
@@ -288,40 +289,34 @@ function flushPassiveEffects(pendingPassiveEffects: PendingPassiveEffects) {
     didFlushPassiveEffect = true
     commitHookEffectListUnmount(Passive, effect)
   })
-
   pendingPassiveEffects.unmount = []
 
   pendingPassiveEffects.update.forEach(effect => {
     didFlushPassiveEffect = true
     commitHookEffectListDestroy(Passive | HookHasEffect, effect)
   })
-
   pendingPassiveEffects.update.forEach(effect => {
     didFlushPassiveEffect = true
     commitHookEffectListCreate(Passive | HookHasEffect, effect)
   })
   pendingPassiveEffects.update = []
-
   flushSyncCallbacks()
-
   return didFlushPassiveEffect
 }
 
 function workLoopSync() {
   while (workInProgress !== null) {
-    preformUnitOfWork(workInProgress)
+    performUnitOfWork(workInProgress)
   }
 }
-
 function workLoopConcurrent() {
   while (workInProgress !== null && !unstable_shouldYield()) {
-    preformUnitOfWork(workInProgress)
+    performUnitOfWork(workInProgress)
   }
 }
 
-function preformUnitOfWork(fiber: FiberNode) {
+function performUnitOfWork(fiber: FiberNode) {
   const next = beginWork(fiber, workInProgressRootRenderLane)
-
   fiber.memoizedProps = fiber.pendingProps
 
   if (next === null) {
@@ -336,15 +331,13 @@ function completeUnitOfWork(fiber: FiberNode) {
 
   do {
     completeWork(node)
-
     const sibling = node.sibling
 
-    if (sibling != null) {
+    if (sibling !== null) {
       workInProgress = sibling
       return
     }
-
     node = node.return
     workInProgress = node
-  } while (node != null)
+  } while (node !== null)
 }

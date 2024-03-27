@@ -3,7 +3,7 @@
  * @Author: Ali
  * @Date: 2024-03-08 16:41:32
  * @LastEditors: Ali
- * @LastEditTime: 2024-03-27 12:32:06
+ * @LastEditTime: 2024-03-27 13:36:18
  */
 
 import { ReactElementType } from 'shared/ReactTypes'
@@ -60,8 +60,8 @@ function updateHostRoot(workInProgress: FiberNode, renderLane: Lane) {
   const baseState = workInProgress.memoizedState
 
   const updateQueue = workInProgress.updateQueue as UpdateQueue<Element>
-  const pending = updateQueue.shard.pending
-  updateQueue.shard.pending = null
+  const pending = updateQueue.shared.pending
+  updateQueue.shared.pending = null
 
   const { memoizedState } = processUpdateQueue(baseState, pending, renderLane)
 
