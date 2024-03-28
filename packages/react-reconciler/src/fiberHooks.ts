@@ -3,7 +3,7 @@
  * @Author: Ali
  * @Date: 2024-03-15 15:24:15
  * @LastEditors: Ali
- * @LastEditTime: 2024-03-27 12:37:19
+ * @LastEditTime: 2024-03-28 15:20:01
  */
 
 import internals from 'shared/internals'
@@ -17,7 +17,7 @@ import {
   enqueueUpdate,
   processUpdateQueue
 } from './updateQueue'
-import { Action } from 'shared/ReactTypes'
+import { Action, ReactContext } from 'shared/ReactTypes'
 import { scheduleUpdateOnFiber } from './workLoop'
 import { Lane, NoLane, requestUpdateLane } from './fiberLanes'
 import { Flags, PassiveEffect } from './fiberFlags'
@@ -92,14 +92,16 @@ const HooksDispatcherOnMount: Dispatcher = {
   useState: mountState,
   useEffect: mountEffect,
   useTransition: mountTransition,
-  useRef: mountRef
+  useRef: mountRef,
+  useContext: readContext
 }
 
 const HooksDispatcherOnUpdate: Dispatcher = {
   useState: updateState,
   useEffect: updateEffect,
   useTransition: updateTransition,
-  useRef: updateRef
+  useRef: updateRef,
+  useContext: readContext
 }
 
 function mountRef<T>(initialValue: T): { current: T } {
@@ -397,4 +399,16 @@ function updateWorkInprogressHook(): Hook {
   }
 
   return workInprogressHook
+}
+
+function readContext<T>(context: ReactContext<T>): T {
+  const consumer = currentlyRenderingFiber
+
+  if (consumer === null) {
+    throw new Error('Hooks can only be called inside the body of a function component')
+  }
+
+  const value = context.__currentValue
+
+  return value
 }

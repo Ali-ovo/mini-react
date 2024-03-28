@@ -3,7 +3,7 @@
  * @Author: Ali
  * @Date: 2024-03-08 16:41:41
  * @LastEditors: Ali
- * @LastEditTime: 2024-03-27 11:19:41
+ * @LastEditTime: 2024-03-28 15:06:14
  */
 
 import {
@@ -14,8 +14,16 @@ import {
   createTextInstance
 } from 'hostConfig'
 import { FiberNode } from './fiber'
-import { Fragment, FunctionComponent, HostComponent, HostRoot, HostText } from './workTags'
+import {
+  ContextProvider,
+  Fragment,
+  FunctionComponent,
+  HostComponent,
+  HostRoot,
+  HostText
+} from './workTags'
 import { NoFlags, Ref, Update } from './fiberFlags'
+import { popProvider } from './fiberContext'
 
 function markUpdate(fiber: FiberNode) {
   fiber.flags |= Update
@@ -81,7 +89,12 @@ export const completeWork = (workInProgress: FiberNode) => {
     case FunctionComponent:
     case Fragment:
       bubbleProperties(workInProgress)
+      return null
 
+    case ContextProvider:
+      const context = workInProgress.type._context
+      popProvider(context)
+      bubbleProperties(workInProgress)
       return null
 
     default:

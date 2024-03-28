@@ -3,17 +3,25 @@
  * @Author: Ali
  * @Date: 2024-03-08 16:41:32
  * @LastEditors: Ali
- * @LastEditTime: 2024-03-27 13:36:18
+ * @LastEditTime: 2024-03-28 15:22:18
  */
 
 import { ReactElementType } from 'shared/ReactTypes'
 import { FiberNode } from './fiber'
 import { UpdateQueue, processUpdateQueue } from './updateQueue'
-import { Fragment, FunctionComponent, HostComponent, HostRoot, HostText } from './workTags'
+import {
+  ContextProvider,
+  Fragment,
+  FunctionComponent,
+  HostComponent,
+  HostRoot,
+  HostText
+} from './workTags'
 import { mountChildFibers, reconcileChildFibers } from './childFibers'
 import { renderWithHooks } from './fiberHooks'
 import { Lane } from './fiberLanes'
 import { Ref } from './fiberFlags'
+import { pushProvider } from './fiberContext'
 
 export const beginWork = (workInProgress: FiberNode, renderLane: Lane) => {
   // compare, return child node
@@ -33,6 +41,9 @@ export const beginWork = (workInProgress: FiberNode, renderLane: Lane) => {
     case Fragment:
       return updateFragment(workInProgress)
 
+    case ContextProvider:
+      return updateContextProvider(workInProgress)
+
     default:
       if (__DEV__) {
         console.warn('beginWork: unknown fiber tag')
@@ -42,6 +53,18 @@ export const beginWork = (workInProgress: FiberNode, renderLane: Lane) => {
   }
 
   return null
+}
+
+function updateContextProvider(workInProgress: FiberNode) {
+  const providerType = workInProgress.type
+  const context = providerType._context
+  const newProps = workInProgress.pendingProps
+
+  pushProvider(context, newProps.value)
+
+  const nextChildren = newProps.children
+  reconcileChildren(workInProgress, nextChildren)
+  return workInProgress.child
 }
 
 function updateFragment(workInProgress: FiberNode) {
