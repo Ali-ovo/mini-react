@@ -3,7 +3,7 @@
  * @Author: Ali
  * @Date: 2024-03-14 14:41:40
  * @LastEditors: Ali
- * @LastEditTime: 2024-03-27 11:30:16
+ * @LastEditTime: 2024-03-29 16:15:07
  */
 
 import {
@@ -11,8 +11,12 @@ import {
   Instance,
   appendChildToContainer,
   commitUpdate,
+  hideInstance,
+  hideTextInstance,
   insertChildToContainer,
-  removeChild
+  removeChild,
+  unhideInstance,
+  unhideTextInstance
 } from 'hostConfig'
 import { FiberNode, FiberRootNode, PendingPassiveEffects } from './fiber'
 import {
@@ -25,9 +29,16 @@ import {
   PassiveMask,
   Placement,
   Ref,
-  Update
+  Update,
+  Visibility
 } from './fiberFlags'
-import { FunctionComponent, HostComponent, HostRoot, HostText } from './workTags'
+import {
+  FunctionComponent,
+  HostComponent,
+  HostRoot,
+  HostText,
+  OffscreenComponent
+} from './workTags'
 import { Effect, FCUpdateQueue } from './fiberHooks'
 import { HookHasEffect } from './hookEffectTags'
 
@@ -133,6 +144,79 @@ function commitMutationEffectsOnFiber(finishedWork: FiberNode, root: FiberRootNo
   if ((flags & Ref) !== NoFlags && tag === HostComponent) {
     // 解绑 ref
     safelyDetachRef(finishedWork)
+  }
+
+  if ((flags & Visibility) !== NoFlags && tag === OffscreenComponent) {
+    const isHidden = finishedWork.pendingProps.mode === 'hidden'
+    finishedWork.flags &= ~Visibility
+    hideOrUnhideAlChildren(finishedWork, isHidden)
+  }
+}
+
+function hideOrUnhideAlChildren(finishedWork: FiberNode, isHidden: boolean) {
+  findHostSubtreeRoot(finishedWork, hostRoot => {
+    const instance = hostRoot.stateNode
+    if (hostRoot.tag === HostComponent) {
+      isHidden ? hideInstance(instance) : unhideInstance(instance)
+    } else if (hostRoot.tag === HostText) {
+      isHidden
+        ? hideTextInstance(instance)
+        : unhideTextInstance(instance, hostRoot.memoizedProps.content)
+    }
+  })
+}
+
+function findHostSubtreeRoot(
+  finishedWork: FiberNode,
+  callback: (hostSubtreeRoot: FiberNode) => void
+) {
+  let node = finishedWork
+  let hostSubtreeRoot = null
+
+  while (true) {
+    if (node.tag === HostComponent) {
+      if (hostSubtreeRoot === null) {
+        hostSubtreeRoot = node
+        callback(node)
+      }
+    } else if (node.tag === HostText) {
+      if (hostSubtreeRoot === null) {
+        callback(node)
+      }
+    } else if (
+      node.tag === OffscreenComponent &&
+      node.pendingProps.mode === 'hidden' &&
+      node !== finishedWork
+    ) {
+      // not to do anything
+    } else if (node.child !== null) {
+      node.child.return = node
+      node = node.child
+      continue
+    }
+
+    if (node === finishedWork) {
+      return
+    }
+
+    while (node.sibling === null) {
+      if (node.return === null || node.return === finishedWork) {
+        return
+      }
+
+      if (hostSubtreeRoot === node) {
+        hostSubtreeRoot = null
+      }
+
+      node = node.return
+    }
+
+    if (hostSubtreeRoot === node) {
+      hostSubtreeRoot = null
+    }
+
+    node.sibling.return = node.return
+    node = node.sibling
   }
 }
 

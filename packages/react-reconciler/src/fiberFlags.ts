@@ -16,7 +16,7 @@ export const DidCapture = 0b1000000
 // unwind应该捕获、还未捕获到
 export const ShouldCapture = 0b1000000000000
 
-export const MutationMask = Placement | Update | ChildDeletion | Ref
+export const MutationMask = Placement | Update | ChildDeletion | Ref | Visibility
 export const LayoutMask = Ref
 
 export const PassiveMask = PassiveEffect | ChildDeletion

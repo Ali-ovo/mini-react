@@ -3,7 +3,7 @@
  * @Author: Ali
  * @Date: 2024-03-08 16:41:41
  * @LastEditors: Ali
- * @LastEditTime: 2024-03-28 15:06:14
+ * @LastEditTime: 2024-03-29 15:58:25
  */
 
 import {
@@ -20,9 +20,11 @@ import {
   FunctionComponent,
   HostComponent,
   HostRoot,
-  HostText
+  HostText,
+  OffscreenComponent,
+  SuspenseComponent
 } from './workTags'
-import { NoFlags, Ref, Update } from './fiberFlags'
+import { NoFlags, Ref, Update, Visibility } from './fiberFlags'
 import { popProvider } from './fiberContext'
 
 function markUpdate(fiber: FiberNode) {
@@ -88,12 +90,33 @@ export const completeWork = (workInProgress: FiberNode) => {
     case HostRoot:
     case FunctionComponent:
     case Fragment:
+    case OffscreenComponent:
       bubbleProperties(workInProgress)
       return null
 
     case ContextProvider:
       const context = workInProgress.type._context
       popProvider(context)
+      bubbleProperties(workInProgress)
+      return null
+
+    case SuspenseComponent:
+      const offscreenFiber = workInProgress.child as FiberNode
+      const isHidden = offscreenFiber.pendingProps.mode === 'hidden'
+      const currentOffscreenFiber = offscreenFiber.alternate
+      if (currentOffscreenFiber !== null) {
+        // update
+
+        const wasHidden = currentOffscreenFiber.pendingProps.mode === 'hidden'
+        if (isHidden !== wasHidden) {
+          offscreenFiber.flags |= Visibility
+          bubbleProperties(offscreenFiber)
+        }
+      } else if (isHidden) {
+        offscreenFiber.flags |= Visibility
+        bubbleProperties(offscreenFiber)
+      }
+
       bubbleProperties(workInProgress)
       return null
 

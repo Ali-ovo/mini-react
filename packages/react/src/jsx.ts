@@ -3,10 +3,10 @@
  * @Author: Ali
  * @Date: 2024-03-06 16:49:25
  * @LastEditors: Ali
- * @LastEditTime: 2024-03-27 12:17:05
+ * @LastEditTime: 2024-03-29 15:25:54
  */
 
-import { REACT_ELEMENT_TYPE, REACT_FRAGMENT_TYPE } from 'shared/ReactSymbols'
+import { REACT_ELEMENT_TYPE, REACT_FRAGMENT_TYPE, REACT_SUSPENSE_TYPE } from 'shared/ReactSymbols'
 import { ReactElementType, Key, Ref, Type, Props, ElementType } from 'shared/ReactTypes'
 
 const ReactElement = function (
@@ -103,3 +103,4 @@ export const jsxDEV = (type: ElementType, config: any) => {
 }
 
 export const Fragment = REACT_FRAGMENT_TYPE
+export const Suspense = REACT_SUSPENSE_TYPE

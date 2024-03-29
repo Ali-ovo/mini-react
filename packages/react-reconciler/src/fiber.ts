@@ -3,16 +3,29 @@
  * @Author: Ali
  * @Date: 2024-03-19 13:12:10
  * @LastEditors: Ali
- * @LastEditTime: 2024-03-28 15:08:18
+ * @LastEditTime: 2024-03-29 15:35:08
  */
 import { Props, Key, Ref, ReactElementType } from 'shared/ReactTypes'
-import { ContextProvider, Fragment, FunctionComponent, HostComponent, WorkTag } from './workTags'
+import {
+  ContextProvider,
+  Fragment,
+  FunctionComponent,
+  HostComponent,
+  OffscreenComponent,
+  SuspenseComponent,
+  WorkTag
+} from './workTags'
 import { Flags, NoFlags } from './fiberFlags'
 import { Container } from 'hostConfig'
 import { Lane, Lanes, NoLane, NoLanes } from './fiberLanes'
 import { Effect } from './fiberHooks'
 import { CallbackNode } from 'scheduler'
-import { REACT_PROVIDER_TYPE } from 'shared/ReactSymbols'
+import { REACT_PROVIDER_TYPE, REACT_SUSPENSE_TYPE } from 'shared/ReactSymbols'
+
+export interface OffscreenProps {
+  mode: 'visible' | 'hidden'
+  children: any
+}
 
 export interface PendingPassiveEffects {
   unmount: Effect[]
@@ -143,6 +156,8 @@ export function createFiberFromElement(element: ReactElementType): FiberNode {
     fiberTag = HostComponent
   } else if (typeof type === 'object' && type.$$typeof === REACT_PROVIDER_TYPE) {
     fiberTag = ContextProvider
+  } else if (type.$$typeof === REACT_SUSPENSE_TYPE) {
+    fiberTag = SuspenseComponent
   } else if (typeof type !== 'function' && __DEV__) {
     console.warn('createFiberFromElement: unknown type', element)
   }
@@ -156,5 +171,10 @@ export function createFiberFromElement(element: ReactElementType): FiberNode {
 
 export function createFiberFromFragment(elements: any[], key: Key): FiberNode {
   const fiber = new FiberNode(Fragment, elements, key)
+  return fiber
+}
+
+export function createFiberFromOffscreen(pendingProps: OffscreenProps): FiberNode {
+  const fiber = new FiberNode(OffscreenComponent, pendingProps, null)
   return fiber
 }

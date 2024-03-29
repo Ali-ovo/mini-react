@@ -3,13 +3,14 @@
  * @Author: Ali
  * @Date: 2024-03-06 16:29:06
  * @LastEditors: Ali
- * @LastEditTime: 2024-03-28 15:24:06
+ * @LastEditTime: 2024-03-29 15:25:55
  */
 
 import { Dispatcher, resolveDispatcher } from './src/currentDispatch'
 import { jsx, jsxDEV, isValidElement as isValidElementFn } from './src/jsx'
 import currentDispatcher from './src/currentDispatch'
 import currentBatchConfig from './src/currentBatchConfig'
+export { Fragment, Suspense } from './src/jsx'
 
 export { createContext } from './src/context'
 
