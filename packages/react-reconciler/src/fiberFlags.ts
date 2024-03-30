@@ -17,6 +17,9 @@ export const DidCapture = 0b1000000
 export const ShouldCapture = 0b1000000000000
 
 export const MutationMask = Placement | Update | ChildDeletion | Ref | Visibility
+
 export const LayoutMask = Ref
 
 export const PassiveMask = PassiveEffect | ChildDeletion
+
+export const HostEffectMask = MutationMask | LayoutMask | PassiveMask | DidCapture

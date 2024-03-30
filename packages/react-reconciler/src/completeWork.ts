@@ -3,7 +3,7 @@
  * @Author: Ali
  * @Date: 2024-03-08 16:41:41
  * @LastEditors: Ali
- * @LastEditTime: 2024-03-29 15:58:25
+ * @LastEditTime: 2024-03-30 16:00:04
  */
 
 import {
@@ -26,6 +26,7 @@ import {
 } from './workTags'
 import { NoFlags, Ref, Update, Visibility } from './fiberFlags'
 import { popProvider } from './fiberContext'
+import { popSuspenseHandler } from './suspenseContext'
 
 function markUpdate(fiber: FiberNode) {
   fiber.flags |= Update
@@ -101,6 +102,7 @@ export const completeWork = (workInProgress: FiberNode) => {
       return null
 
     case SuspenseComponent:
+      popSuspenseHandler()
       const offscreenFiber = workInProgress.child as FiberNode
       const isHidden = offscreenFiber.pendingProps.mode === 'hidden'
       const currentOffscreenFiber = offscreenFiber.alternate

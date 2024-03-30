@@ -3,13 +3,14 @@
  * @Author: Ali
  * @Date: 2024-03-06 16:29:06
  * @LastEditors: Ali
- * @LastEditTime: 2024-03-29 15:25:55
+ * @LastEditTime: 2024-03-30 15:32:57
  */
 
 import { Dispatcher, resolveDispatcher } from './src/currentDispatch'
 import { jsx, jsxDEV, isValidElement as isValidElementFn } from './src/jsx'
 import currentDispatcher from './src/currentDispatch'
 import currentBatchConfig from './src/currentBatchConfig'
+import { Usable } from 'shared/ReactTypes'
 export { Fragment, Suspense } from './src/jsx'
 
 export { createContext } from './src/context'
@@ -37,6 +38,11 @@ export const useRef: Dispatcher['useRef'] = initialValue => {
 export const useContext: Dispatcher['useContext'] = context => {
   const dispatcher = resolveDispatcher()
   return dispatcher.useContext(context)
+}
+
+export const use: Dispatcher['use'] = <T>(useable: Usable<T>) => {
+  const dispatcher = resolveDispatcher()
+  return dispatcher.use(useable)
 }
 
 // 内部数据共享层

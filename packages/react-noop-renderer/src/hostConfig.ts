@@ -114,5 +114,13 @@ export const scheduleMicroTask =
   typeof queueMicrotask === 'function'
     ? queueMicrotask
     : typeof Promise === 'function'
-      ? (callback: (...args: any) => void) => Promise.resolve().then(callback)
-      : setTimeout
+    ? (callback: (...args: any) => void) => Promise.resolve().then(callback)
+    : setTimeout
+
+export function hideInstance(instance: Instance) {}
+
+export function unhideInstance(instance: Instance) {}
+
+export function hideTextInstance(textInstance: TextInstance) {}
+
+export function unhideTextInstance(textInstance: TextInstance, text: string) {}

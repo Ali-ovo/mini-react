@@ -3,9 +3,9 @@
  * @Author: Ali
  * @Date: 2024-03-19 13:12:10
  * @LastEditors: Ali
- * @LastEditTime: 2024-03-29 15:35:08
+ * @LastEditTime: 2024-03-30 17:11:13
  */
-import { Props, Key, Ref, ReactElementType } from 'shared/ReactTypes'
+import { Props, Key, Ref, ReactElementType, Wakeable } from 'shared/ReactTypes'
 import {
   ContextProvider,
   Fragment,
@@ -100,12 +100,19 @@ export class FiberRootNode {
   callbackNode: CallbackNode | null
   callbackPriority: Lane
 
+  pingCache: WeakMap<Wakeable<any>, Set<Lane>> | null
+  suspendedLanes: Lanes
+  pingedLanes: Lanes
+
   constructor(container: Container, hostRootFiber: FiberNode) {
     this.container = container
     this.current = hostRootFiber
     hostRootFiber.stateNode = this
     this.finishedWork = null
     this.pendingLanes = NoLanes
+    this.suspendedLanes = NoLanes
+    this.pingedLanes = NoLanes
+
     this.finishedLane = NoLane
 
     this.callbackNode = null
@@ -115,6 +122,8 @@ export class FiberRootNode {
       unmount: [],
       update: []
     }
+
+    this.pingCache = null
   }
 }
 
@@ -156,7 +165,7 @@ export function createFiberFromElement(element: ReactElementType): FiberNode {
     fiberTag = HostComponent
   } else if (typeof type === 'object' && type.$$typeof === REACT_PROVIDER_TYPE) {
     fiberTag = ContextProvider
-  } else if (type.$$typeof === REACT_SUSPENSE_TYPE) {
+  } else if (type === REACT_SUSPENSE_TYPE) {
     fiberTag = SuspenseComponent
   } else if (typeof type !== 'function' && __DEV__) {
     console.warn('createFiberFromElement: unknown type', element)

@@ -3,7 +3,7 @@
  * @Author: Ali
  * @Date: 2024-03-08 16:41:32
  * @LastEditors: Ali
- * @LastEditTime: 2024-03-29 15:50:48
+ * @LastEditTime: 2024-03-30 17:19:46
  */
 
 import { ReactElementType } from 'shared/ReactTypes'
@@ -28,8 +28,9 @@ import {
 import { mountChildFibers, reconcileChildFibers } from './childFibers'
 import { renderWithHooks } from './fiberHooks'
 import { Lane } from './fiberLanes'
-import { ChildDeletion, Placement, Ref } from './fiberFlags'
+import { ChildDeletion, DidCapture, NoFlags, Placement, Ref } from './fiberFlags'
 import { pushProvider } from './fiberContext'
+import { pushSuspenseHandler } from './suspenseContext'
 
 export const beginWork = (workInProgress: FiberNode, renderLane: Lane) => {
   // compare, return child node
@@ -74,13 +75,16 @@ function updateSuspenseComponent(workInProgress: FiberNode) {
   const nextProps = workInProgress.pendingProps
 
   let showFallback = false
-  const didSuspend = true
+  const didSuspend = (workInProgress.flags & DidCapture) !== NoFlags
   if (didSuspend) {
     showFallback = true
+    workInProgress.flags &= ~DidCapture
   }
 
   const newPrimaryChildren = nextProps.children
   const nextFallbackChildren = nextProps.fallback
+
+  pushSuspenseHandler(workInProgress)
 
   if (current === null) {
     // mount
@@ -242,6 +246,12 @@ function updateHostRoot(workInProgress: FiberNode, renderLane: Lane) {
   updateQueue.shared.pending = null
 
   const { memoizedState } = processUpdateQueue(baseState, pending, renderLane)
+
+  const current = workInProgress.alternate
+  // 考虑RootDidNotComplete的情况，需要复用memoizedState
+  if (current !== null) {
+    current.memoizedState = memoizedState
+  }
 
   workInProgress.memoizedState = memoizedState
 
