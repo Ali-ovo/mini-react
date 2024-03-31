@@ -1,11 +1,14 @@
 import { Dispatch } from 'react/src/currentDispatch'
 import { Action } from 'shared/ReactTypes'
-import { Lane, NoLane, isSubsetOfLanes } from './fiberLanes'
+import { Lane, NoLane, isSubsetOfLanes, mergeLanes } from './fiberLanes'
+import { FiberNode } from './fiber'
 
 export interface Update<State> {
   action: Action<State>
   lane: Lane
   next: Update<any> | null
+  hasEagerState: boolean
+  eagerState: State | null
 }
 
 export interface UpdateQueue<State> {
@@ -16,11 +19,18 @@ export interface UpdateQueue<State> {
   dispatch: Dispatch<State> | null
 }
 
-export const createUpdate = <State>(action: Action<State>, lane: Lane): Update<State> => {
+export const createUpdate = <State>(
+  action: Action<State>,
+  lane: Lane,
+  hasEagerState = false,
+  eagerState = null
+): Update<State> => {
   return {
     action,
     lane,
-    next: null
+    next: null,
+    hasEagerState,
+    eagerState
   }
 }
 
@@ -33,7 +43,12 @@ export const createUpdateQueue = <State>() => {
   } as UpdateQueue<State>
 }
 
-export const enqueueUpdate = <State>(updateQueue: UpdateQueue<State>, update: Update<State>) => {
+export const enqueueUpdate = <State>(
+  updateQueue: UpdateQueue<State>,
+  update: Update<State>,
+  fiber: FiberNode,
+  lane: Lane
+) => {
   const pending = updateQueue.shared.pending
   if (pending === null) {
     // a -> a
@@ -45,12 +60,29 @@ export const enqueueUpdate = <State>(updateQueue: UpdateQueue<State>, update: Up
   }
 
   updateQueue.shared.pending = update
+
+  fiber.lanes = mergeLanes(fiber.lanes, lane)
+  const alternate = fiber.alternate
+  if (alternate !== null) {
+    alternate.lanes = mergeLanes(alternate.lanes, lane)
+  }
+}
+
+export function basicStateReducer<State>(state: State, action: Action<State>): State {
+  if (action instanceof Function) {
+    // baseState 1 update (x) => 4x -> memoizedState 4
+    return action(state)
+  } else {
+    // baseState 1 update 2 -> memoizedState 2
+    return action
+  }
 }
 
 export const processUpdateQueue = <State>(
   baseState: State,
   pendingUpdate: Update<State> | null,
-  renderLane: Lane
+  renderLane: Lane,
+  onSkipUpdate?: <State>(update: Update<State>) => void
 ): {
   memoizedState: State
   baseState: State
@@ -78,6 +110,9 @@ export const processUpdateQueue = <State>(
       if (!isSubsetOfLanes(renderLane, updateLane)) {
         // 优先级不够 被跳过
         const clone = createUpdate(pending.action, pending.lane)
+
+        onSkipUpdate?.(clone)
+
         // 是不是第一个被跳过的
         if (newBaseQueueFirst === null) {
           newBaseQueueFirst = clone
@@ -96,12 +131,10 @@ export const processUpdateQueue = <State>(
         }
 
         const action = pendingUpdate.action
-        if (action instanceof Function) {
-          // baseState 1 update (x) => 4x -> memoizedState 4
-          newState = action(baseState)
+        if (pending.hasEagerState) {
+          newState = pending.eagerState
         } else {
-          // baseState 1 update 2 -> memoizedState 2
-          newState = action
+          newState = basicStateReducer(baseState, action)
         }
       }
 

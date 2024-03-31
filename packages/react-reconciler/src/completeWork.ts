@@ -3,7 +3,7 @@
  * @Author: Ali
  * @Date: 2024-03-08 16:41:41
  * @LastEditors: Ali
- * @LastEditTime: 2024-03-30 16:00:04
+ * @LastEditTime: 2024-03-31 13:35:37
  */
 
 import {
@@ -27,6 +27,7 @@ import {
 import { NoFlags, Ref, Update, Visibility } from './fiberFlags'
 import { popProvider } from './fiberContext'
 import { popSuspenseHandler } from './suspenseContext'
+import { NoLanes, mergeLanes } from './fiberLanes'
 
 function markUpdate(fiber: FiberNode) {
   fiber.flags |= Update
@@ -160,14 +161,18 @@ function appendAllChildren(parent: Container | Instance, workInProgress: FiberNo
 function bubbleProperties(workInProgress: FiberNode) {
   let subtreeFlags = NoFlags
   let child = workInProgress.child
+  let newChildLanes = NoLanes
 
   while (child !== null) {
     subtreeFlags |= child.subtreeFlags
     subtreeFlags |= child.flags
+
+    newChildLanes = mergeLanes(newChildLanes, mergeLanes(child.lanes, child.childLanes))
 
     child.return = workInProgress
     child = child.sibling
   }
 
   workInProgress.subtreeFlags |= subtreeFlags
+  workInProgress.childLanes = newChildLanes
 }

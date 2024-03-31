@@ -3,7 +3,7 @@
  * @Author: Ali
  * @Date: 2024-03-15 15:24:15
  * @LastEditors: Ali
- * @LastEditTime: 2024-03-30 16:44:34
+ * @LastEditTime: 2024-03-31 14:29:53
  */
 
 import internals from 'shared/internals'
@@ -12,6 +12,7 @@ import { Dispatch, Dispatcher } from 'react/src/currentDispatch'
 import {
   Update,
   UpdateQueue,
+  basicStateReducer,
   createUpdate,
   createUpdateQueue,
   enqueueUpdate,
@@ -19,12 +20,13 @@ import {
 } from './updateQueue'
 import { Action, ReactContext, Thenable, Usable } from 'shared/ReactTypes'
 import { scheduleUpdateOnFiber } from './workLoop'
-import { Lane, NoLane, requestUpdateLane } from './fiberLanes'
+import { Lane, NoLane, NoLanes, mergeLanes, removeLanes, requestUpdateLane } from './fiberLanes'
 import { Flags, PassiveEffect } from './fiberFlags'
 import { HookHasEffect, Passive } from './hookEffectTags'
 import currentBatchConfig from 'react/src/currentBatchConfig'
 import { REACT_CONTEXT_TYPE } from 'shared/ReactSymbols'
 import { trackUsedThenable } from './thenable'
+import { markWorkInProgressReceivedUpdate } from './beginWork'
 
 let currentlyRenderingFiber: FiberNode | null = null
 let workInprogressHook: Hook | null = null
@@ -49,6 +51,7 @@ export interface Effect {
 
 export interface FCUpdateQueue<State> extends UpdateQueue<State> {
   lastEffect: Effect | null
+  lastRenderedState: State
 }
 
 type EffectCallback = () => void
@@ -227,7 +230,7 @@ function updateState<State>(): [State, Dispatch<State>] {
   const hook = updateWorkInprogressHook()
 
   // 计算 state
-  const queue = hook.updateQueue as UpdateQueue<State>
+  const queue = hook.updateQueue as FCUpdateQueue<State>
   const baseState = hook.baseState
 
   const pending = queue.shared.pending
@@ -252,14 +255,27 @@ function updateState<State>(): [State, Dispatch<State>] {
   }
 
   if (baseQueue !== null) {
+    const prevState = hook.memoizedState
     const {
       memoizedState,
       baseQueue: newBaseQueue,
       baseState: newBaseState
-    } = processUpdateQueue(baseState, baseQueue, renderLane)
+    } = processUpdateQueue(baseState, baseQueue, renderLane, update => {
+      const skippedLane = update.lane
+      const fiber = currentlyRenderingFiber as FiberNode
+
+      fiber.lanes = mergeLanes(fiber.lanes, skippedLane)
+    })
+
+    if (!Object.is(prevState, memoizedState)) {
+      markWorkInProgressReceivedUpdate()
+    }
+
     hook.memoizedState = memoizedState
     hook.baseState = newBaseState
     hook.baseQueue = newBaseQueue
+
+    queue.lastRenderedState = memoizedState
   }
 
   return [hook.memoizedState, queue.dispatch as Dispatch<State>]
@@ -276,14 +292,15 @@ function mountState<State>(initialState: (() => State) | State): [State, Dispatc
     memoizedState = initialState
   }
 
-  const queue = createUpdateQueue<State>()
+  const queue = createFCUpdateQueue<State>()
   hook.updateQueue = queue
   hook.memoizedState = memoizedState
   hook.baseState = memoizedState
 
   // @ts-ignore
-  const dispatch = dispatchState.bind(null, currentlyRenderingFiber, queue)
+  const dispatch = dispatchSetState.bind(null, currentlyRenderingFiber, queue)
   queue.dispatch = dispatch
+  queue.lastRenderedState = memoizedState
 
   return [memoizedState, dispatch]
 }
@@ -318,15 +335,35 @@ function startTransition(setPending: Dispatch<boolean>, callback: () => void) {
   currentBatchConfig.transition = preTransition
 }
 
-function dispatchState<State>(
+function dispatchSetState<State>(
   fiber: FiberNode,
-  updateQueue: UpdateQueue<State>,
+  updateQueue: FCUpdateQueue<State>,
   action: Action<State>
 ) {
   const lane = requestUpdateLane()
-
   const update = createUpdate(action, lane)
-  enqueueUpdate(updateQueue, update)
+
+  // eager 策略
+  const current = fiber.alternate
+  if (fiber.lanes === NoLanes && (current === null || current.lanes === NoLanes)) {
+    // 当前产生的update是这个fiber的第一个update
+    const currentState = updateQueue.lastRenderedState
+    const eagerState = basicStateReducer(currentState, action)
+    update.hasEagerState = true
+    update.eagerState = eagerState
+
+    if (Object.is(currentState, eagerState)) {
+      enqueueUpdate(updateQueue, update, fiber, NoLane)
+
+      // eagerState和currentState相等，不需要更新
+      if (__DEV__) {
+        console.log('命中eagerState', fiber)
+      }
+      return
+    }
+  }
+
+  enqueueUpdate(updateQueue, update, fiber, lane)
   scheduleUpdateOnFiber(fiber, lane)
 }
 
@@ -430,8 +467,16 @@ function use<T>(usable: Usable<T>): T {
   throw new Error('不支持的use参数 ' + usable)
 }
 
-export function resetHooksOnUnwind(wip: FiberNode) {
+export function resetHooksOnUnwind(workInProgress: FiberNode) {
   currentlyRenderingFiber = null
   currentHook = null
   workInprogressHook = null
+}
+
+export function bailoutHook(workInProgress: FiberNode, renderLane: Lane) {
+  const current = workInProgress.alternate as FiberNode
+  workInProgress.updateQueue = current.updateQueue
+  workInProgress.flags &= ~PassiveEffect
+
+  current.lanes = removeLanes(current.lanes, renderLane)
 }

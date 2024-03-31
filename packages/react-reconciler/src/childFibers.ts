@@ -134,7 +134,7 @@ function ChildReconciler(shouldTrackEffects: boolean) {
     newChild: any
   ) {
     // 最后一个可复用的 fiber 的 index
-    let lastPlacedIndex: number = 0
+    let lastPlacedIndex = 0
 
     // 最后一个fiber
     let lastNewFiber: FiberNode | null = null
@@ -355,3 +355,21 @@ function updateFragment(
 
 export const reconcileChildFibers = ChildReconciler(true)
 export const mountChildFibers = ChildReconciler(false)
+
+export function cloneChildFibers(workInProgress: FiberNode) {
+  // child sibling
+  if (workInProgress.child === null) {
+    return
+  }
+
+  let currentChild = workInProgress.child
+  let newChild = createWorkInProgress(currentChild, currentChild.pendingProps)
+  workInProgress.child = newChild
+  newChild.return = workInProgress
+
+  while (currentChild.sibling !== null) {
+    currentChild = currentChild.sibling
+    newChild = newChild.sibling = createWorkInProgress(currentChild, currentChild.pendingProps)
+    newChild.return = workInProgress
+  }
+}

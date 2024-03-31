@@ -3,7 +3,7 @@
  * @Author: Ali
  * @Date: 2024-03-19 13:12:10
  * @LastEditors: Ali
- * @LastEditTime: 2024-03-30 17:11:13
+ * @LastEditTime: 2024-03-31 13:28:53
  */
 import { Props, Key, Ref, ReactElementType, Wakeable } from 'shared/ReactTypes'
 import {
@@ -48,12 +48,12 @@ export class FiberNode {
   memoizedState: any
   alternate: FiberNode | null
   flags: Flags
-
   subtreeFlags: Flags
-
   updateQueue: unknown
-
   deletions: FiberNode[] | null
+
+  lanes: Lanes
+  childLanes: Lanes
 
   constructor(tag: WorkTag, pendingProps: Props, key: Key) {
     // Tag is the type of the Fiber
@@ -84,8 +84,10 @@ export class FiberNode {
     // effects
     this.flags = NoFlags
     this.subtreeFlags = NoFlags
-
     this.deletions = null
+
+    this.lanes = NoLanes
+    this.childLanes = NoLanes
   }
 }
 
@@ -152,6 +154,9 @@ export const createWorkInProgress = (current: FiberNode, pendingProps: Props): F
   workInProgress.memoizedProps = current.memoizedProps
   workInProgress.memoizedState = current.memoizedState
   workInProgress.ref = current.ref
+
+  workInProgress.lanes = current.lanes
+  workInProgress.childLanes = current.childLanes
 
   return workInProgress
 }

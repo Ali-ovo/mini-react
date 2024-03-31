@@ -3,7 +3,7 @@
  * @Author: Ali
  * @Date: 2024-03-08 16:41:32
  * @LastEditors: Ali
- * @LastEditTime: 2024-03-30 17:19:46
+ * @LastEditTime: 2024-03-31 14:03:49
  */
 
 import { ReactElementType } from 'shared/ReactTypes'
@@ -25,14 +25,53 @@ import {
   OffscreenComponent,
   SuspenseComponent
 } from './workTags'
-import { mountChildFibers, reconcileChildFibers } from './childFibers'
-import { renderWithHooks } from './fiberHooks'
-import { Lane } from './fiberLanes'
+import { cloneChildFibers, mountChildFibers, reconcileChildFibers } from './childFibers'
+import { bailoutHook, renderWithHooks } from './fiberHooks'
+import { Lane, NoLanes, includeSomeLanes } from './fiberLanes'
 import { ChildDeletion, DidCapture, NoFlags, Placement, Ref } from './fiberFlags'
 import { pushProvider } from './fiberContext'
 import { pushSuspenseHandler } from './suspenseContext'
 
+let didReceiveUpdate = false
+
+export function markWorkInProgressReceivedUpdate() {
+  didReceiveUpdate = true
+}
+
 export const beginWork = (workInProgress: FiberNode, renderLane: Lane) => {
+  didReceiveUpdate = false
+  const current = workInProgress.alternate
+
+  if (current !== null) {
+    const oldProps = current.memoizedProps
+    const newProps = workInProgress.pendingProps
+
+    if (oldProps !== newProps || current.type !== workInProgress.type) {
+      didReceiveUpdate = true
+    } else {
+      // state context
+      const hasScheduledStateOrContext = checkScheduledUpdateOrContext(current, renderLane)
+
+      if (!hasScheduledStateOrContext) {
+        // bailout
+        didReceiveUpdate = false
+
+        switch (workInProgress.tag) {
+          case ContextProvider:
+            const newValue = workInProgress.memoizedProps.value
+            const context = workInProgress.type._context
+            pushProvider(context, newValue)
+            break
+          // TODO: Suspense
+        }
+
+        return bailoutOnAlreadyFinishedWork(workInProgress, renderLane)
+      }
+    }
+  }
+
+  workInProgress.lanes = NoLanes
+
   // compare, return child node
   switch (workInProgress.tag) {
     case HostRoot:
@@ -68,6 +107,32 @@ export const beginWork = (workInProgress: FiberNode, renderLane: Lane) => {
   }
 
   return null
+}
+
+function bailoutOnAlreadyFinishedWork(workInProgress: FiberNode, renderLane: Lane) {
+  if (!includeSomeLanes(workInProgress.childLanes, renderLane)) {
+    if (__DEV__) {
+      console.warn('bailout: 整个子树', workInProgress)
+    }
+
+    return null
+  }
+
+  if (__DEV__) {
+    console.warn('bailout: 部分子树', workInProgress)
+  }
+
+  cloneChildFibers(workInProgress)
+  return workInProgress.child
+}
+
+function checkScheduledUpdateOrContext(current: FiberNode, renderLane: Lane): boolean {
+  const updateLanes = current.lanes
+  if (includeSomeLanes(updateLanes, renderLane)) {
+    return true
+  }
+
+  return false
 }
 
 function updateSuspenseComponent(workInProgress: FiberNode) {
@@ -233,7 +298,16 @@ function updateFragment(workInProgress: FiberNode) {
 }
 
 function updateFunctionComponent(workInProgress: FiberNode, renderLane: Lane) {
+  // render
   const nextChildren = renderWithHooks(workInProgress, renderLane)
+
+  const current = workInProgress.alternate
+  if (current !== null && !didReceiveUpdate) {
+    // bailout
+    bailoutHook(workInProgress, renderLane)
+    return bailoutOnAlreadyFinishedWork(workInProgress, renderLane)
+  }
+
   reconcileChildren(workInProgress, nextChildren)
   return workInProgress.child
 }
@@ -245,20 +319,24 @@ function updateHostRoot(workInProgress: FiberNode, renderLane: Lane) {
   const pending = updateQueue.shared.pending
   updateQueue.shared.pending = null
 
+  const prevChildren = workInProgress.memoizedState
+
   const { memoizedState } = processUpdateQueue(baseState, pending, renderLane)
+  workInProgress.memoizedState = memoizedState
 
   const current = workInProgress.alternate
   // 考虑RootDidNotComplete的情况，需要复用memoizedState
   if (current !== null) {
-    current.memoizedState = memoizedState
+    if (!current.memoizedState) {
+      current.memoizedState = memoizedState
+    }
   }
 
-  workInProgress.memoizedState = memoizedState
-
   const nextChildren = workInProgress.memoizedState
-
+  if (prevChildren === nextChildren) {
+    return bailoutOnAlreadyFinishedWork(workInProgress, renderLane)
+  }
   reconcileChildren(workInProgress, nextChildren)
-
   return workInProgress.child
 }
 
