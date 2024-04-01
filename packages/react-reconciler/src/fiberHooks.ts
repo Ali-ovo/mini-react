@@ -3,7 +3,7 @@
  * @Author: Ali
  * @Date: 2024-03-15 15:24:15
  * @LastEditors: Ali
- * @LastEditTime: 2024-03-31 14:29:53
+ * @LastEditTime: 2024-04-01 16:03:54
  */
 
 import internals from 'shared/internals'
@@ -59,7 +59,11 @@ type EffectDeps = any[] | null
 
 const { currentDispatcher } = internals
 
-export function renderWithHooks(workInProgress: FiberNode, lane: Lane) {
+export function renderWithHooks(
+  workInProgress: FiberNode,
+  Component: FiberNode['type'],
+  lane: Lane
+) {
   // 赋值
   currentlyRenderingFiber = workInProgress
 
@@ -80,7 +84,6 @@ export function renderWithHooks(workInProgress: FiberNode, lane: Lane) {
     currentDispatcher.current = HooksDispatcherOnMount
   }
 
-  const Component = workInProgress.type
   const props = workInProgress.pendingProps
   const children = Component(props)
 

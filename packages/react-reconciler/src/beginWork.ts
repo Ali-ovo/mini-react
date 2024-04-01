@@ -3,7 +3,7 @@
  * @Author: Ali
  * @Date: 2024-03-08 16:41:32
  * @LastEditors: Ali
- * @LastEditTime: 2024-03-31 14:03:49
+ * @LastEditTime: 2024-04-01 16:12:49
  */
 
 import { ReactElementType } from 'shared/ReactTypes'
@@ -22,6 +22,7 @@ import {
   HostComponent,
   HostRoot,
   HostText,
+  MemoComponent,
   OffscreenComponent,
   SuspenseComponent
 } from './workTags'
@@ -31,6 +32,7 @@ import { Lane, NoLanes, includeSomeLanes } from './fiberLanes'
 import { ChildDeletion, DidCapture, NoFlags, Placement, Ref } from './fiberFlags'
 import { pushProvider } from './fiberContext'
 import { pushSuspenseHandler } from './suspenseContext'
+import { shallowEquals } from 'shared/shallowEquals'
 
 let didReceiveUpdate = false
 
@@ -84,7 +86,7 @@ export const beginWork = (workInProgress: FiberNode, renderLane: Lane) => {
       return null
 
     case FunctionComponent:
-      return updateFunctionComponent(workInProgress, renderLane)
+      return updateFunctionComponent(workInProgress, workInProgress.type, renderLane)
 
     case Fragment:
       return updateFragment(workInProgress)
@@ -98,6 +100,9 @@ export const beginWork = (workInProgress: FiberNode, renderLane: Lane) => {
     case OffscreenComponent:
       return updateOffscreenComponent(workInProgress)
 
+    case MemoComponent:
+      return updateMemoComponent(workInProgress, renderLane)
+
     default:
       if (__DEV__) {
         console.warn('beginWork: unknown fiber tag')
@@ -107,6 +112,32 @@ export const beginWork = (workInProgress: FiberNode, renderLane: Lane) => {
   }
 
   return null
+}
+
+function updateMemoComponent(workInProgress: FiberNode, renderLane: Lane) {
+  // bailout 四要素
+  const current = workInProgress.alternate
+  const nextProps = workInProgress.pendingProps
+  const Component = workInProgress.type.type
+
+  if (current !== null) {
+    const prevProps = current.memoizedProps
+
+    // state context
+    if (!checkScheduledUpdateOrContext(current, renderLane)) {
+      // 浅比较props
+      if (shallowEquals(prevProps, nextProps) && current.ref === workInProgress.ref) {
+        didReceiveUpdate = false
+        workInProgress.pendingProps = prevProps
+
+        // 满足四要素
+        workInProgress.lanes = current.lanes
+        return bailoutOnAlreadyFinishedWork(workInProgress, renderLane)
+      }
+    }
+  }
+
+  return updateFunctionComponent(workInProgress, Component, renderLane)
 }
 
 function bailoutOnAlreadyFinishedWork(workInProgress: FiberNode, renderLane: Lane) {
@@ -297,9 +328,13 @@ function updateFragment(workInProgress: FiberNode) {
   return workInProgress.child
 }
 
-function updateFunctionComponent(workInProgress: FiberNode, renderLane: Lane) {
+function updateFunctionComponent(
+  workInProgress: FiberNode,
+  Component: FiberNode['type'],
+  renderLane: Lane
+) {
   // render
-  const nextChildren = renderWithHooks(workInProgress, renderLane)
+  const nextChildren = renderWithHooks(workInProgress, Component, renderLane)
 
   const current = workInProgress.alternate
   if (current !== null && !didReceiveUpdate) {

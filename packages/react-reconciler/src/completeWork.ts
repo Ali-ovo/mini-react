@@ -3,7 +3,7 @@
  * @Author: Ali
  * @Date: 2024-03-08 16:41:41
  * @LastEditors: Ali
- * @LastEditTime: 2024-03-31 13:35:37
+ * @LastEditTime: 2024-04-01 16:06:04
  */
 
 import {
@@ -21,6 +21,7 @@ import {
   HostComponent,
   HostRoot,
   HostText,
+  MemoComponent,
   OffscreenComponent,
   SuspenseComponent
 } from './workTags'
@@ -93,6 +94,7 @@ export const completeWork = (workInProgress: FiberNode) => {
     case FunctionComponent:
     case Fragment:
     case OffscreenComponent:
+    case MemoComponent:
       bubbleProperties(workInProgress)
       return null
 

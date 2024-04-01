@@ -3,7 +3,7 @@
  * @Author: Ali
  * @Date: 2024-03-19 13:12:10
  * @LastEditors: Ali
- * @LastEditTime: 2024-03-31 13:28:53
+ * @LastEditTime: 2024-04-01 15:55:38
  */
 import { Props, Key, Ref, ReactElementType, Wakeable } from 'shared/ReactTypes'
 import {
@@ -11,6 +11,7 @@ import {
   Fragment,
   FunctionComponent,
   HostComponent,
+  MemoComponent,
   OffscreenComponent,
   SuspenseComponent,
   WorkTag
@@ -20,7 +21,7 @@ import { Container } from 'hostConfig'
 import { Lane, Lanes, NoLane, NoLanes } from './fiberLanes'
 import { Effect } from './fiberHooks'
 import { CallbackNode } from 'scheduler'
-import { REACT_PROVIDER_TYPE, REACT_SUSPENSE_TYPE } from 'shared/ReactSymbols'
+import { REACT_MEMO_TYPE, REACT_PROVIDER_TYPE, REACT_SUSPENSE_TYPE } from 'shared/ReactSymbols'
 
 export interface OffscreenProps {
   mode: 'visible' | 'hidden'
@@ -168,8 +169,22 @@ export function createFiberFromElement(element: ReactElementType): FiberNode {
 
   if (typeof type === 'string') {
     fiberTag = HostComponent
-  } else if (typeof type === 'object' && type.$$typeof === REACT_PROVIDER_TYPE) {
-    fiberTag = ContextProvider
+  } else if (typeof type === 'object') {
+    switch (type.$$typeof) {
+      case REACT_PROVIDER_TYPE:
+        fiberTag = ContextProvider
+        break
+
+      case REACT_MEMO_TYPE:
+        fiberTag = MemoComponent
+        break
+
+      default:
+        if (__DEV__) {
+          console.warn('createFiberFromElement: unknown type', element)
+        }
+        break
+    }
   } else if (type === REACT_SUSPENSE_TYPE) {
     fiberTag = SuspenseComponent
   } else if (typeof type !== 'function' && __DEV__) {

@@ -3,7 +3,7 @@
  * @Author: Ali
  * @Date: 2024-03-06 16:29:06
  * @LastEditors: Ali
- * @LastEditTime: 2024-03-30 15:32:57
+ * @LastEditTime: 2024-04-01 15:54:17
  */
 
 import { Dispatcher, resolveDispatcher } from './src/currentDispatch'
@@ -14,6 +14,7 @@ import { Usable } from 'shared/ReactTypes'
 export { Fragment, Suspense } from './src/jsx'
 
 export { createContext } from './src/context'
+export { memo } from './src/memo'
 
 export const useState: Dispatcher['useState'] = initialState => {
   const dispatcher = resolveDispatcher()
