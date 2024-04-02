@@ -3,7 +3,7 @@
  * @Author: Ali
  * @Date: 2024-03-06 16:29:06
  * @LastEditors: Ali
- * @LastEditTime: 2024-04-01 15:54:17
+ * @LastEditTime: 2024-04-02 14:21:21
  */
 
 import { Dispatcher, resolveDispatcher } from './src/currentDispatch'
@@ -44,6 +44,16 @@ export const useContext: Dispatcher['useContext'] = context => {
 export const use: Dispatcher['use'] = <T>(useable: Usable<T>) => {
   const dispatcher = resolveDispatcher()
   return dispatcher.use(useable)
+}
+
+export const useMemo: Dispatcher['useMemo'] = (nextCreate, deps) => {
+  const dispatcher = resolveDispatcher()
+  return dispatcher.useMemo(nextCreate, deps)
+}
+
+export const useCallback: Dispatcher['useCallback'] = (callback, deps) => {
+  const dispatcher = resolveDispatcher()
+  return dispatcher.useCallback(callback, deps)
 }
 
 // 内部数据共享层

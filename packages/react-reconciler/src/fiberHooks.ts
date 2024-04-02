@@ -3,7 +3,7 @@
  * @Author: Ali
  * @Date: 2024-03-15 15:24:15
  * @LastEditors: Ali
- * @LastEditTime: 2024-04-01 16:03:54
+ * @LastEditTime: 2024-04-02 14:18:42
  */
 
 import internals from 'shared/internals'
@@ -45,7 +45,7 @@ export interface Effect {
   tag: Flags
   create: EffectCallback | void
   destroy: EffectCallback | void
-  deps: EffectDeps
+  deps: HookDeps
   next: Effect | null
 }
 
@@ -55,7 +55,7 @@ export interface FCUpdateQueue<State> extends UpdateQueue<State> {
 }
 
 type EffectCallback = () => void
-type EffectDeps = any[] | null
+export type HookDeps = any[] | null
 
 const { currentDispatcher } = internals
 
@@ -102,7 +102,9 @@ const HooksDispatcherOnMount: Dispatcher = {
   useTransition: mountTransition,
   useRef: mountRef,
   useContext: readContext,
-  use
+  use,
+  useMemo: mountMemo,
+  useCallback: mountCallback
 }
 
 const HooksDispatcherOnUpdate: Dispatcher = {
@@ -111,7 +113,9 @@ const HooksDispatcherOnUpdate: Dispatcher = {
   useTransition: updateTransition,
   useRef: updateRef,
   useContext: readContext,
-  use
+  use,
+  useMemo: updateMemo,
+  useCallback: updateCallback
 }
 
 function mountRef<T>(initialValue: T): { current: T } {
@@ -126,7 +130,7 @@ function updateRef<T>(initialValue: T): { current: T } {
   return hook.memoizedState
 }
 
-function mountEffect(create: EffectCallback | void, deps: EffectDeps) {
+function mountEffect(create: EffectCallback | void, deps: HookDeps | undefined) {
   // 找到当前 useState 的 hook
   const hook = mountWorkInprogressHook()
 
@@ -137,7 +141,7 @@ function mountEffect(create: EffectCallback | void, deps: EffectDeps) {
   hook.memoizedState = pushEffect(Passive | HookHasEffect, create, undefined, nextDeps)
 }
 
-function updateEffect(create: EffectCallback | void, deps: EffectDeps) {
+function updateEffect(create: EffectCallback | void, deps: HookDeps | undefined) {
   // 找到当前 useState 的 hook
   const hook = updateWorkInprogressHook()
   const nextDeps = deps === undefined ? null : deps
@@ -163,7 +167,7 @@ function updateEffect(create: EffectCallback | void, deps: EffectDeps) {
   }
 }
 
-function areHookInputsEqual(nextDeps: EffectDeps, prevDeps: EffectDeps): boolean {
+function areHookInputsEqual(nextDeps: HookDeps, prevDeps: HookDeps): boolean {
   if (prevDeps === null || nextDeps === null) {
     return false
   }
@@ -183,7 +187,7 @@ function pushEffect(
   hookFlags: Flags,
   create: EffectCallback | void,
   destroy: EffectCallback | void,
-  deps: EffectDeps
+  deps: HookDeps
 ): Effect {
   const effect: Effect = {
     tag: hookFlags,
@@ -482,4 +486,52 @@ export function bailoutHook(workInProgress: FiberNode, renderLane: Lane) {
   workInProgress.flags &= ~PassiveEffect
 
   current.lanes = removeLanes(current.lanes, renderLane)
+}
+
+function mountCallback<T>(callback: T, deps: HookDeps | undefined): T {
+  const hook = mountWorkInprogressHook()
+  const nextDeps = deps === undefined ? null : deps
+  hook.memoizedState = [callback, nextDeps]
+  return callback
+}
+
+function updateCallback<T>(callback: T, deps: HookDeps | undefined): T {
+  const hook = updateWorkInprogressHook()
+  const nextDeps = deps === undefined ? null : deps
+  const prevState = hook.memoizedState
+
+  if (nextDeps !== null) {
+    const prevDeps = prevState[1]
+    if (areHookInputsEqual(nextDeps, prevDeps)) {
+      return prevState[0]
+    }
+  }
+
+  hook.memoizedState = [callback, nextDeps]
+  return callback
+}
+
+function mountMemo<T>(nextCreate: () => T, deps: HookDeps | undefined): T {
+  const hook = mountWorkInprogressHook()
+  const nextDeps = deps === undefined ? null : deps
+  const nextValue = nextCreate()
+  hook.memoizedState = [nextValue, nextDeps]
+  return nextValue
+}
+
+function updateMemo<T>(nextCreate: () => T, deps: HookDeps | undefined): T {
+  const hook = updateWorkInprogressHook()
+  const nextDeps = deps === undefined ? null : deps
+  const prevState = hook.memoizedState
+
+  if (nextDeps !== null) {
+    const prevDeps = prevState[1]
+    if (areHookInputsEqual(nextDeps, prevDeps)) {
+      return prevState[0]
+    }
+  }
+
+  const nextValue = nextCreate()
+  hook.memoizedState = [nextValue, nextDeps]
+  return nextValue
 }
