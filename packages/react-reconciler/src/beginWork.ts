@@ -3,7 +3,7 @@
  * @Author: Ali
  * @Date: 2024-03-08 16:41:32
  * @LastEditors: Ali
- * @LastEditTime: 2024-04-01 16:12:49
+ * @LastEditTime: 2024-04-03 11:25:51
  */
 
 import { ReactElementType } from 'shared/ReactTypes'
@@ -30,7 +30,7 @@ import { cloneChildFibers, mountChildFibers, reconcileChildFibers } from './chil
 import { bailoutHook, renderWithHooks } from './fiberHooks'
 import { Lane, NoLanes, includeSomeLanes } from './fiberLanes'
 import { ChildDeletion, DidCapture, NoFlags, Placement, Ref } from './fiberFlags'
-import { pushProvider } from './fiberContext'
+import { prepareToReadContext, propagateContextChange, pushProvider } from './fiberContext'
 import { pushSuspenseHandler } from './suspenseContext'
 import { shallowEquals } from 'shared/shallowEquals'
 
@@ -92,7 +92,7 @@ export const beginWork = (workInProgress: FiberNode, renderLane: Lane) => {
       return updateFragment(workInProgress)
 
     case ContextProvider:
-      return updateContextProvider(workInProgress)
+      return updateContextProvider(workInProgress, renderLane)
 
     case SuspenseComponent:
       return updateSuspenseComponent(workInProgress)
@@ -310,12 +310,24 @@ function updateOffscreenComponent(workInProgress: FiberNode) {
   return workInProgress.child
 }
 
-function updateContextProvider(workInProgress: FiberNode) {
+function updateContextProvider(workInProgress: FiberNode, renderLane: Lane) {
   const providerType = workInProgress.type
   const context = providerType._context
   const newProps = workInProgress.pendingProps
+  const oldProps = workInProgress.memoizedProps
+  const newValue = newProps.value
 
-  pushProvider(context, newProps.value)
+  pushProvider(context, newValue)
+
+  if (oldProps !== null) {
+    const oldValue = oldProps.value
+
+    if (Object.is(oldValue, newValue) && oldProps.children === newProps.children) {
+      return bailoutOnAlreadyFinishedWork(workInProgress, renderLane)
+    } else {
+      propagateContextChange(workInProgress, context, renderLane)
+    }
+  }
 
   const nextChildren = newProps.children
   reconcileChildren(workInProgress, nextChildren)
@@ -333,6 +345,8 @@ function updateFunctionComponent(
   Component: FiberNode['type'],
   renderLane: Lane
 ) {
+  prepareToReadContext(workInProgress, renderLane)
+
   // render
   const nextChildren = renderWithHooks(workInProgress, Component, renderLane)
 

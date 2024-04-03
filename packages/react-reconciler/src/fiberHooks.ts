@@ -3,7 +3,7 @@
  * @Author: Ali
  * @Date: 2024-03-15 15:24:15
  * @LastEditors: Ali
- * @LastEditTime: 2024-04-02 14:18:42
+ * @LastEditTime: 2024-04-03 11:05:08
  */
 
 import internals from 'shared/internals'
@@ -27,6 +27,7 @@ import currentBatchConfig from 'react/src/currentBatchConfig'
 import { REACT_CONTEXT_TYPE } from 'shared/ReactSymbols'
 import { trackUsedThenable } from './thenable'
 import { markWorkInProgressReceivedUpdate } from './beginWork'
+import { readContext as readContextOrigin } from './fiberContext'
 
 let currentlyRenderingFiber: FiberNode | null = null
 let workInprogressHook: Hook | null = null
@@ -449,16 +450,8 @@ function updateWorkInprogressHook(): Hook {
   return workInprogressHook
 }
 
-function readContext<T>(context: ReactContext<T>): T {
-  const consumer = currentlyRenderingFiber
-
-  if (consumer === null) {
-    throw new Error('Hooks can only be called inside the body of a function component')
-  }
-
-  const value = context.__currentValue
-
-  return value
+function readContext<Value>(context: ReactContext<Value>): Value {
+  return readContextOrigin(currentlyRenderingFiber, context)
 }
 
 function use<T>(usable: Usable<T>): T {

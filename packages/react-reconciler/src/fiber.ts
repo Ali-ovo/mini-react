@@ -3,7 +3,7 @@
  * @Author: Ali
  * @Date: 2024-03-19 13:12:10
  * @LastEditors: Ali
- * @LastEditTime: 2024-04-01 15:55:38
+ * @LastEditTime: 2024-04-03 10:59:51
  */
 import { Props, Key, Ref, ReactElementType, Wakeable } from 'shared/ReactTypes'
 import {
@@ -22,6 +22,7 @@ import { Lane, Lanes, NoLane, NoLanes } from './fiberLanes'
 import { Effect } from './fiberHooks'
 import { CallbackNode } from 'scheduler'
 import { REACT_MEMO_TYPE, REACT_PROVIDER_TYPE, REACT_SUSPENSE_TYPE } from 'shared/ReactSymbols'
+import { ContextItem } from './fiberContext'
 
 export interface OffscreenProps {
   mode: 'visible' | 'hidden'
@@ -32,6 +33,12 @@ export interface PendingPassiveEffects {
   unmount: Effect[]
   update: Effect[]
 }
+
+interface FiberDependencies<Value> {
+  firstContext: ContextItem<Value> | null
+  lanes: Lanes
+}
+
 export class FiberNode {
   type: any
   tag: WorkTag
@@ -55,6 +62,8 @@ export class FiberNode {
 
   lanes: Lanes
   childLanes: Lanes
+
+  dependencies: FiberDependencies<any> | null
 
   constructor(tag: WorkTag, pendingProps: Props, key: Key) {
     // Tag is the type of the Fiber
@@ -89,6 +98,8 @@ export class FiberNode {
 
     this.lanes = NoLanes
     this.childLanes = NoLanes
+
+    this.dependencies = null
   }
 }
 
@@ -158,6 +169,15 @@ export const createWorkInProgress = (current: FiberNode, pendingProps: Props): F
 
   workInProgress.lanes = current.lanes
   workInProgress.childLanes = current.childLanes
+
+  const currentDeps = current.dependencies
+  workInProgress.dependencies =
+    currentDeps === null
+      ? null
+      : {
+          lanes: currentDeps.lanes,
+          firstContext: currentDeps.firstContext
+        }
 
   return workInProgress
 }
